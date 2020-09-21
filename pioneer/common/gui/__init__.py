@@ -77,17 +77,17 @@ try:
 except:
     print(traceback.format_exc())
 
-try:
-    from . import PySpinCamera
-    qmlRegisterType(PySpinCamera.PySpinCamera, "Leddar", 1, 0, "PySpinCamera")
-except:
-    print(traceback.format_exc())
+# try:
+#     from . import PySpinCamera
+#     qmlRegisterType(PySpinCamera.PySpinCamera, "Leddar", 1, 0, "PySpinCamera")
+# except:
+#     print(traceback.format_exc())
 
-try:
-    from . import V4LCamera
-    qmlRegisterType(V4LCamera.V4LCamera, "Leddar", 1, 0, "V4LCamera")
-except:
-    print(traceback.format_exc())
+# try:
+#     from . import V4LCamera
+#     qmlRegisterType(V4LCamera.V4LCamera, "Leddar", 1, 0, "V4LCamera")
+# except:
+#     print(traceback.format_exc())
 
 
 def merge_bvhs(bvhs, matrices = None):

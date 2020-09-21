@@ -298,6 +298,66 @@ def quad(top_left = [0,0,0], bottom_left = [0,1,0], bottom_right = [1,1,0], top_
         , name = name
         )
 
+def lane(vertices, color, double=False, dashed=False, width=0.07, matrix = np.eye(4, dtype = 'f4')):
+
+    actors = Actors.Actors()
+
+    offset = width if double else 0
+    nb_lanes = 2 if double else 1
+
+    dash_lenght = 1
+    lenght_drew = 0
+    total_lenght = 0
+
+    for n in range(nb_lanes):
+
+        ddashed = dashed[n] if double else dashed
+
+        if ddashed:
+            # For dashed lanes, the distance between vertices needs to be shorter than the dash lenght to be properly displayed
+            # So, we upsample if required
+            while np.max(((vertices[1:,0] - vertices[:-1,0])**2 + (vertices[1:,1] - vertices[:-1,1])**2)**0.5) > dash_lenght/2:
+                new_vertices = (vertices[:-1] + vertices[1:])/2 
+                vertices = np.insert(vertices, np.indices(vertices.shape)[0,1:,0], new_vertices, axis=0) 
+
+        for i in range(vertices.shape[0]-1):
+
+            v1x, v1y, v1z = vertices[i,0], vertices[i,1], vertices[i,2]
+            v2x, v2y, v2z = vertices[i+1,0], vertices[i+1,1], vertices[i+1,2]
+
+            # Rotate the lane segment so its aspect is preserved in all orientations
+            angle = np.arctan(abs(v2y - v1y)/abs(v2x - v1x))
+            dx = (width/2)*np.sin(angle)
+            dy = (width/2)*np.cos(angle)
+            doffx = offset*np.sin(angle)
+            doffy = offset*np.cos(angle)
+
+            # Draw half the time only
+            if ddashed:
+                lenght = ((v2x - v1x)**2 + (v2y - v1y)**2)**0.5
+                total_lenght += lenght
+                if lenght_drew > total_lenght/2 and int(total_lenght%(2*dash_lenght)):
+                    continue
+                lenght_drew += lenght
+                
+
+            actor = actors.addActor(
+                quad(
+                    top_left     = [v2x+dx+doffx, v2y+dy+doffy, v2z],
+                    bottom_left  = [v1x+dx+doffx, v1y+dy+doffy, v1z],
+                    bottom_right = [v1x-dx+doffx, v1y-dy+doffy, v1z],
+                    top_right    = [v2x-dx+doffx, v2y-dy+doffy, v2z],
+                    filled = True,
+                    matrix = matrix,
+                    color = color,
+                    name = 'lanes',
+                    effect_f = CustomEffects.emissive_both_sides
+                )
+            )
+
+        offset *= -1 #for double lanes, reverse the offset for the second lane
+
+    return actors
 
 def chessboard(nx = 4, ny = 3, dx = 0.1, dy = 0.1, matrix = np.eye(4, dtype = 'f4'), name = "chessboard", color1 = "white", color2 = "black"):
 
