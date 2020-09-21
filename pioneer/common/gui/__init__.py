@@ -1,8 +1,6 @@
 from pioneer.common import linalg
 from pioneer.leddar_utils_cpp import BVH, PointsBVH
 
-from . import *
-
 import numpy as np
 import traceback
 

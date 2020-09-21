@@ -1,3 +1,5 @@
+from . import BVH as PybindBVH
+from . import PointsBVH as PybindPointsBVH
 from pioneer.common.gui import Product
 from pioneer.common.gui.Array import Array
 
@@ -75,10 +77,10 @@ class BVH( Product.Product ):
 
         if self._primitiveType == PrimitiveType.TRIANGLES:
             self._shape_indices = self._indices.ndarray.reshape(self._indices.ndarray.shape[0]//3, 3, order = 'C')
-            self.bvh = leddar_utils.BVH(self._shape_indices, self._points.ndarray.astype('f4'))
+            self.bvh = PybindBVH(self._shape_indices, self._points.ndarray.astype('f4'))
         elif self._primitiveType == PrimitiveType.POINTS:
             self._shape_indices = self._indices.ndarray.reshape(self._indices.ndarray.shape[0], 1, order = 'C')
-            self.bvh = leddar_utils.PointsBVH(self._shape_indices, self._points.ndarray.astype('f4'))
+            self.bvh = PybindPointsBVH(self._shape_indices, self._points.ndarray.astype('f4'))
         else:
             raise NotImplementedError()
 
