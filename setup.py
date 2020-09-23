@@ -75,7 +75,9 @@ kwargs = dict(
     packages=[
         'pioneer', 
         'pioneer.common', 
-        'pioneer.common.gui'
+        'pioneer.common.gui',
+        'pioneer.common.gui.qml',
+        'pioneer.common.gui.qml.backend_qtquick5'
     ],
     dependency_links = [
         "https://__token__:qcnZ-LPju8cqtpG1cpss@svleddar-gitlab.leddartech.local/api/v4/projects/481/packages/pypi/simple"
