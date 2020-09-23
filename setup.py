@@ -65,20 +65,36 @@ from subprocess import CalledProcessError
 
 kwargs = dict(
     name='pioneer_common_gui',
-    version='0.0.1',
+    version='0.1.0',
     author='Leddartech',
     description='Pioneer gui utility package',
     long_description='',
     ext_modules=[CMakeExtension('leddar_utils_cpp')],
     cmdclass=dict(build_ext=CMakeBuild),
-    packages=setuptools.find_packages(),
     zip_safe=False,
-    # packages=['leddar_utils', 'leddar_gui', 'backend_qtquick5'],
-    # install_requires=['future', 'transforms3d', 'matplotlib', 'numpy' #output from pipreqs ./leddar_utils
-    # , 'opencv_python', 'PyOpenGL', 'PyQt5', 'pycollada', 'utm', 'Shapely'],   #output from pipreqs ./leddar_gui (duplicates removed)
-    # extras_require={ #not available on PyPI
-    #     'leddartech_common':  ['leddar'],
-    #     'leddar_gui': ['das', 'PySpin']},
+    packages=[
+        'pioneer', 
+        'pioneer.common', 
+        'pioneer.common.gui'
+    ],
+    dependency_links = [
+        "https://__token__:qcnZ-LPju8cqtpG1cpss@svleddar-gitlab.leddartech.local/api/v4/projects/481/packages/pypi/simple"
+    ],
+    install_requires=[
+        'future', 
+        'transforms3d', 
+        'matplotlib', 
+        'numpy', 
+        'opencv-python', 
+        'PyOpenGL', 
+        'PyQt5==5.14', 
+        'PyQtChart==5.14',
+        'pycollada', 
+        'utm', 
+        'Shapely',
+        'pioneer-common',
+        'tqdm'
+    ],
     include_package_data = True
 )
 
