@@ -80,7 +80,7 @@ kwargs = dict(
         'pioneer.common.gui.qml.backend_qtquick5'
     ],
     dependency_links = [
-        "https://__token__:qcnZ-LPju8cqtpG1cpss@svleddar-gitlab.leddartech.local/api/v4/projects/481/packages/pypi/simple"
+        "https://pioneer:yK6RUkhUCNHg3e1yxGT4@svleddar-gitlab.leddartech.local/api/v4/projects/481/packages/pypi/simple"
     ],
     install_requires=[
         'future', 
