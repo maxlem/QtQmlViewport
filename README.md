@@ -2,6 +2,7 @@
 
 pioneer.common.ui is a python gui library regrouping all graphical utilities needed by pioneer.das.view and other applications.
 
+
 ## Installation
 
 Before installing, you should add to your pip.conf file the gitlab pypi server urls as extra index url, and also trust the gitlab host.
@@ -18,6 +19,8 @@ Use the package manager [pip](https://pioneer:yK6RUkhUCNHg3e1yxGT4@svleddar-gitl
 ```bash
 pip install pioneer-common-gui
 ```
+** Prerequisites **
+To setup pioneer.common.gui in develop mode, you need to have installed **cmake** beforehand.
 
 When developing, you can link the repository to your python site-packages and enable hot-reloading of the package
 ```bash
