@@ -9,6 +9,14 @@ from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 from distutils.version import LooseVersion
 
+def parse_requirements(filename):
+    """ load requirements from a pip requirements file """
+    lineiter = (line.strip() for line in open(filename))
+    return [line for line in lineiter if line and not line.startswith("#")]
+
+install_reqs = parse_requirements('requirements.txt')
+
+
 class CMakeExtension(Extension):
     def __init__(self, name, sourcedir=''):
         Extension.__init__(self, name, sources=[])
@@ -82,21 +90,7 @@ kwargs = dict(
     dependency_links = [
         "https://pioneer:yK6RUkhUCNHg3e1yxGT4@svleddar-gitlab.leddartech.local/api/v4/projects/481/packages/pypi/simple"
     ],
-    install_requires=[
-        'future', 
-        'transforms3d', 
-        'matplotlib', 
-        'numpy', 
-        'opencv-python', 
-        'PyOpenGL', 
-        'PyQt5==5.14', 
-        'PyQtChart==5.14',
-        'pycollada', 
-        'utm', 
-        'Shapely',
-        'pioneer-common',
-        'tqdm'
-    ],
+    install_requires=install_reqs,
     include_package_data = True
 )
 
