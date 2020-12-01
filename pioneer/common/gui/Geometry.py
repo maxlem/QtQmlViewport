@@ -81,6 +81,13 @@ class BVH( Product.Product ):
         elif self._primitiveType == PrimitiveType.POINTS:
             self._shape_indices = self._indices.ndarray.reshape(self._indices.ndarray.shape[0], 1, order = 'C')
             self.bvh = PybindPointsBVH(self._shape_indices, self._points.ndarray.astype('f4'))
+        elif self._primitiveType == PrimitiveType.LINES:
+            if not (self._indices.shape == [28]) and not (self._indices.shape == [24]):
+                return
+            
+            indices = self._indices.ndarray[:-4]
+            self._shape_indices = indices.reshape(indices.shape[0]//3, 3, order = 'C')
+            self.bvh = PybindBVH(self._shape_indices, self._points.ndarray.astype('f4'))
         else:
             raise NotImplementedError()
 
@@ -110,7 +117,7 @@ class Geometry( Product.Product ):
 
     def goc_bvh(self, update = False):
 
-        if self.bvh is None and self.primitiveType in [PrimitiveType.TRIANGLES, PrimitiveType.POINTS]:
+        if self.bvh is None and self.primitiveType in [PrimitiveType.TRIANGLES, PrimitiveType.POINTS, PrimitiveType.LINES]:
             self.bvh = BVH(self, self.indices, self.attribs.vertices, self.primitiveType)
         if self.bvh is not None and update:
             self.bvh.update()

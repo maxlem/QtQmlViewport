@@ -166,7 +166,7 @@ class Viewport( QQuickFramebufferObject ):
 
                     local_origin_np, local_direction_np = utils.to_numpy(local_origin), utils.to_numpy(local_direction)
                     # try to intersect the actor's geometry!
-                    if bvh.primitiveType == BVH.PrimitiveType.TRIANGLES:
+                    if bvh.primitiveType == BVH.PrimitiveType.TRIANGLES or bvh.primitiveType == BVH.PrimitiveType.LINES:
 
                         ids, tuvs = bvh.bvh.intersect_ray(local_origin_np, local_direction_np, True)
 
