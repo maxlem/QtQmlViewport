@@ -82,11 +82,9 @@ class BVH( Product.Product ):
             self._shape_indices = self._indices.ndarray.reshape(self._indices.ndarray.shape[0], 1, order = 'C')
             self.bvh = PybindPointsBVH(self._shape_indices, self._points.ndarray.astype('f4'))
         elif self._primitiveType == PrimitiveType.LINES:
-            if not (self._indices.shape == [28]) and not (self._indices.shape == [24]):
-                return
             
-            indices = self._indices.ndarray[:-4]
-            self._shape_indices = indices.reshape(indices.shape[0]//3, 3, order = 'C')
+            indices = Array(ndarray = np.array([0,1,2, 1,2,3, 0,4,2, 2,4,6, 1,5,3, 3,5,7, 4,5,6, 5,6,7, 2,3,6, 3,6,7], 'u4'))
+            self._shape_indices = indices.ndarray.reshape(indices.ndarray.shape[0]//3, 3, order = 'C')
             self.bvh = PybindBVH(self._shape_indices, self._points.ndarray.astype('f4'))
         else:
             raise NotImplementedError()
