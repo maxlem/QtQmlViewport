@@ -73,7 +73,7 @@ from subprocess import CalledProcessError
 
 kwargs = dict(
     name='pioneer_common_gui',
-    version='0.1.0',
+    version='0.2.0',
     author='Leddartech',
     description='Pioneer gui utility package',
     long_description='',
