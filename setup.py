@@ -22,7 +22,6 @@ class CMakeExtension(Extension):
         Extension.__init__(self, name, sources=[])
         self.sourcedir = os.path.abspath(sourcedir)
 
-
 class CMakeBuild(build_ext):
     def run(self):
         try:
@@ -73,7 +72,7 @@ from subprocess import CalledProcessError
 
 kwargs = dict(
     name='pioneer_common_gui',
-    version='1.0.0',
+    version='1.1.0',
     author='Leddartech',
     description='Pioneer gui utility package',
     long_description='',
