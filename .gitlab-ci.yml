@@ -8,9 +8,7 @@ build-package:
     - pip3 install twine
     - pip3 install --upgrade keyrings.alt 
     - python3 setup.py bdist_wheel
-    - cd ./build
-    - ls
-    - cp ./build/*.so ./pioneer
+    - cp ./build/lib.linux-x86_64-3.6/pioneer/*.so ./pioneer
     - python3 setup.py sdist
     - python3 -m twine upload --repository gitlab dist/pioneer_common_gui-${CI_COMMIT_TAG}-cp36-cp36m-linux_x86_64.whl --config-file /tmp/.pypirc
     - python3 -m twine upload ./dist/*.tar.gz -u leddartech -p $PYPI_PWD
