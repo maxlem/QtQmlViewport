@@ -8,6 +8,7 @@ build-package:
     - pip3 install twine
     - pip3 install --upgrade keyrings.alt 
     - python3 setup.py bdist_wheel
+    - cd ./build
     - ls
     - cp ./build/*.so ./pioneer
     - python3 setup.py sdist
