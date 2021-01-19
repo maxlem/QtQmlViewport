@@ -5,16 +5,7 @@ pioneer.common.ui is a python gui library regrouping all graphical utilities nee
 
 ## Installation
 
-Before installing, you should add to your pip.conf file the gitlab pypi server urls as extra index url, and also trust the gitlab host.
-
-```conf
-[global]
-extra-index-url =   https://pioneer:yK6RUkhUCNHg3e1yxGT4@svleddar-gitlab.leddartech.local/api/v4/projects/481/packages/pypi/simple
-                    https://pioneer:yK6RUkhUCNHg3e1yxGT4@svleddar-gitlab.leddartech.local/api/v4/projects/488/packages/pypi/simple
-trusted-host = svleddar-gitlab.leddartech.local
-```
-
-Use the package manager [pip](https://pioneer:yK6RUkhUCNHg3e1yxGT4@svleddar-gitlab.leddartech.local/api/v4/projects/488/packages/pypi/simple/pioneer-common-gui) to install pioneer.common.gui
+Use the package manager to install pioneer.common.gui
 
 ```bash
 pip install pioneer-common-gui
