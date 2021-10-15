@@ -13,8 +13,15 @@ pip install pioneer-common-gui
 ** Prerequisites **
 To setup pioneer.common.gui in develop mode, you need to have installed **cmake** beforehand.
 
+**Eigen3** and **tbb** are also required
+```bash
+sudo apt install libeigen3-dev
+sudo apt install libtbb-dev
+```
+
 When developing, you can link the repository to your python site-packages and enable hot-reloading of the package
 ```bash
+pip3 install -r requirements.txt 
 python3 setup.py develop --user
 ```
 
