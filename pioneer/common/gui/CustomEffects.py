@@ -3,7 +3,7 @@ from pioneer.common.gui import Effect, Array
 from PyQt5.QtGui import QColor, QVector4D, QVector3D, QVector2D
 
 import numpy as np
-
+ 
 def point_colors(line_width = 1, point_size = 1):
     return Effect.Effect(name = "point_colors"
     , line_width = line_width
@@ -136,6 +136,9 @@ def emissive(color, back_color = QColor("red"), line_width = 1, point_size = 1, 
                             }
                         """
         , uniforms = {'color' : color, 'back_color' : back_color, 'is_billboard' : is_billboard}))
+
+def emissive_both_sides(color, line_width = 1, point_size = 1, is_billboard = False):
+    return emissive(color, color, line_width, point_size, is_billboard)
 
 
 def depth(scale = 0.01):
