@@ -40,7 +40,7 @@ class CMakeBuild(build_ext):
 
     def build_extension(self, ext):
         extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
-        lib_output_dir = os.path.join(extdir, 'pioneer')
+        lib_output_dir = os.path.join(extdir, 'QtQmlViewport')
         cmake_args = ['-DPYTHON_EXECUTABLE=' + sys.executable]
 
         print(cmake_args)
@@ -71,23 +71,21 @@ class CMakeBuild(build_ext):
 from subprocess import CalledProcessError
 
 kwargs = dict(
-    name='pioneer_common_gui',
+    name='QtQmlViewport',
     version='1.3.0',
     author='Leddartech',
-    description='Pioneer gui utility package',
+    description='Python QtQml 3D viewer toolkit',
     long_description='',
-    ext_modules=[CMakeExtension('leddar_utils_cpp')],
+    ext_modules=[CMakeExtension('PyBVH')],
     cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False,
     packages=[
-        'pioneer', 
-        'pioneer.common', 
-        'pioneer.common.gui',
-        'pioneer.common.gui.qml',
-        'pioneer.common.gui.qml.backend_qtquick5'
+        'QtQmlViewport',
+        'QtQmlViewport.qml',
+        'QtQmlViewport.qml.backend_qtquick5'
     ],
     dependency_links = [
-        "https://pioneer:yK6RUkhUCNHg3e1yxGT4@svleddar-gitlab.leddartech.local/api/v4/projects/481/packages/pypi/simple"
+        # "https://pioneer:yK6RUkhUCNHg3e1yxGT4@svleddar-gitlab.leddartech.local/api/v4/projects/481/packages/pypi/simple"
     ],
     install_requires=install_reqs,
     include_package_data = True

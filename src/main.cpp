@@ -220,7 +220,7 @@ public:
     BVH _tree;
 };
 
-PYBIND11_MODULE(leddar_utils_cpp, m) {
+PYBIND11_MODULE(PyBVH, m) {
     py::class_<PyTrianglesBVH>(m, "BVH")
         .def(py::init<const Ref<const PyTrianglesBVH::Wrapper::Indices>, const Ref<const PyTrianglesBVH::Wrapper::Points>>())
         .def("intersect_ray", &PyTrianglesBVH::intersect_ray)

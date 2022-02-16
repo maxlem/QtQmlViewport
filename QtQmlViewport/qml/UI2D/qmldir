@@ -1,0 +1,4 @@
+module UI2D
+
+PZQImagePainter  1.0 PZQImagePainter.qml
+SmallCheckBox    1.0 SmallCheckBox.qml

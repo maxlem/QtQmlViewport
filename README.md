@@ -36,6 +36,6 @@ pipenv shell
 
 To run the dasview in the virtual environment, you can use the run command
 ```python
-from pioneer.common.gui import Actors
+from QtQmlViewport import Actors
 
 ```
