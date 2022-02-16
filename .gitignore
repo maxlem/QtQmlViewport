@@ -1,6 +1,6 @@
 **/__pycache__/
 /dist
 /build
-/pioneer_common_gui.egg-info/
+/*.egg-info/
 /.vscode
 Pipfile.lock

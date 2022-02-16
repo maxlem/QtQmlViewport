@@ -4,7 +4,7 @@ matplotlib
 numpy
 opencv-python
 PyOpenGL
-PySide6==5.14
+PySide6
 PyQtChart==5.14
 pycollada
 trimesh
