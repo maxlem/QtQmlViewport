@@ -1,7 +1,7 @@
 from QtQmlViewport import Product, Transforms
 
-from PyQt5.QtGui import QMatrix4x4, QVector3D, QQuaternion
-from PyQt5.QtCore import pyqtSlot as Slot, pyqtProperty as Property
+from PySide6.QtGui import QMatrix4x4, QVector3D, QQuaternion
+from PySide6.QtCore import Slot, Property
 
 class Camera(Product.Product):
     '''

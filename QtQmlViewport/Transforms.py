@@ -1,18 +1,18 @@
 from QtQmlViewport import Product
 
-from PyQt5.QtCore import pyqtProperty as Property, pyqtSignal as Signal, pyqtSlot as Slot, Q_CLASSINFO
-from PyQt5.QtGui import QMatrix4x4, QVector3D, QQuaternion
+from PySide6.QtCore import Property, Signal, Slot, ClassInfo
+from PySide6.QtGui import QMatrix4x4, QVector3D, QQuaternion
 
 import math
 
+
+@ClassInfo(DefaultProperty='parentTransform')
 class Transform( Product.Product ):
 
     def __init__( self, parent = None ):
         super(Transform, self).__init__( parent )
         self._localTransform = QMatrix4x4()
         self._parentTransform = None
-
-    Q_CLASSINFO('DefaultProperty', 'parentTransform')
 
     localTransformChanged = Signal()
 

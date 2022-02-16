@@ -1,7 +1,7 @@
 from QtQmlViewport import Product
 
-from PyQt5.QtCore import pyqtSignal as Signal, pyqtSlot as Slot, pyqtProperty as Property
-from PyQt5.QtGui import QVector3D
+from PySide6.QtCore import Signal, Slot, Property
+from PySide6.QtGui import QVector3D
 
 import numpy as np
 
@@ -41,9 +41,9 @@ class Array( Product.Product ):
             assert a.shape[i] == self.ndarray.shape[i]
         self.ndarray = a
 
-    Product.InputProperty(vars(), 'QVariant', 'input', input_cb)
+    Product.InputProperty(vars(), list, 'input', input_cb)
 
-    @Slot(result = 'QVariant')
+    @Slot(result = list)
     def values(self):
         return self.ndarray.tolist()
 

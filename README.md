@@ -40,7 +40,7 @@ pipenv shell
 ```python
 
 from QtQmlViewport import interactive, Actors, Geometry, Array, CustomEffects, CustomActors
-from PyQt5.QtGui import QColor
+from PySide6.QtGui import QColor
 import trimesh
 
 trimesh_ = trimesh.load("tmp.stl")

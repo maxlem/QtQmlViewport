@@ -19,7 +19,7 @@ Actor
 
 	geometry: Geometry
 	{
-		primitiveType: Geometry.LINES
+		primitiveType: Geometry.PrimitiveType.LINES
 		attribs: Attribs
 		{
 			vertices: ArrayFloat3

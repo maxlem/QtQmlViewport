@@ -1,13 +1,14 @@
-from pioneer.common import linalg
 from QtQmlViewport import Product, BVH
 from QtQmlViewport.Effect import Effect
 from QtQmlViewport.Geometry import Geometry
 from QtQmlViewport.Transforms import Transform
 from QtQmlViewport.utils import to_numpy, tf_to_numpy
 
-from PyQt5.QtGui import QColor
-from PyQt5.QtCore import pyqtProperty as Property, pyqtSignal as Signal, pyqtSlot as Slot, QObject, Q_CLASSINFO
-from PyQt5.QtQml import QQmlListProperty
+from PySide6.QtGui import QColor
+from PySide6.QtCore import Property, Signal, Slot, QObject, ClassInfo
+from PySide6.QtQml import ListProperty
+
+
 
 import numpy as np
 
@@ -52,7 +53,7 @@ class Actor( Renderable ):
     Product.InputProperty(vars(), int, 'renderRank')
 
 
-
+@ClassInfo(DefaultProperty='renderables')
 class Actors( Renderable ):
 
     def __init__(self, parent = None, name = None, bbox = None, shared_transform = None, scale = 1, all_vertices = [], type_id = -1, instance_id = -1):
@@ -73,11 +74,13 @@ class Actors( Renderable ):
         self.shared_transform = shared_transform 
 
 
-    Q_CLASSINFO('DefaultProperty', 'renderables')
+    def append(self, x):
+        self._renderables.append(x)
+    # Product.InputProperty(vars(), list, 'renderables')
 
-    @Property(QQmlListProperty)
-    def renderables(self):
-        return QQmlListProperty(Renderable, self, self._renderables)
+
+    renderables = ListProperty(Renderable, append)
+
 
     Product.InputProperty(vars(), QObject, 'instanciator')
 

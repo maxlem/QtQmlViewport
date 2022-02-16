@@ -6,7 +6,8 @@ from QtQmlViewport.Array import Array
 import pioneer.common as leddar_utils
 
 from OpenGL import GL as gl
-from PyQt5.QtCore import QObject, Q_ENUMS
+from enum import Enum, Flag, auto
+from PySide6.QtCore import QEnum, QFlag, QObject
 
 import numpy as np
 
@@ -33,32 +34,33 @@ class Attribs( Product.Product ):
 
         return {"vertices": self._vertices, "normals" : self._normals}
 
-class PrimitiveType(QObject): #for Q_ENUMS: derive from QObject
-    POINTS = gl.GL_POINTS
-    LINES =  gl.GL_LINES
-    LINE_STRIP = gl.GL_LINE_STRIP
-    LINE_LOOP = gl.GL_LINE_LOOP
-    TRIANGLES = gl.GL_TRIANGLES
-    TRIANGLE_STRIP = gl.GL_TRIANGLE_STRIP
-    TRIANGLE_FAN = gl.GL_TRIANGLE_FAN
 
 class BVH( Product.Product ):
 
-    def __init__( self, parent=None, indices=None, points=None, primitive_type = PrimitiveType.TRIANGLES):
+    @QFlag
+    class PrimitiveType(Flag): #for Q_ENUMS: derive from QObject
+        POINTS = gl.GL_POINTS
+        LINES =  gl.GL_LINES
+        LINE_STRIP = gl.GL_LINE_STRIP
+        LINE_LOOP = gl.GL_LINE_LOOP
+        TRIANGLES = gl.GL_TRIANGLES
+        TRIANGLE_STRIP = gl.GL_TRIANGLE_STRIP
+        TRIANGLE_FAN = gl.GL_TRIANGLE_FAN
+
+    def __init__( self, parent=None, indices=None, points=None, primitive_type = gl.GL_TRIANGLES):
         super(BVH, self).__init__( parent )
         self._indices = None
         self._points = None
-        self._primitiveType = PrimitiveType.TRIANGLES
+        self._primitiveType = BVH.PrimitiveType.TRIANGLES
 
         self.indices = indices
         self.points = points
         self.primitiveType = primitive_type
         self.bvh = None
         self._shape_indices = None
+    
 
-    PrimitiveType = PrimitiveType
 
-    Q_ENUMS(PrimitiveType)
 
     Product.InputProperty(vars(), int, 'primitiveType')
 
@@ -75,13 +77,13 @@ class BVH( Product.Product ):
         assert self._indices.ndarray.dtype.type == np.uint32, 'BVH indices must be of type uint32'
 
 
-        if self._primitiveType == PrimitiveType.TRIANGLES:
+        if self._primitiveType == BVH.PrimitiveType.TRIANGLES:
             self._shape_indices = self._indices.ndarray.reshape(self._indices.ndarray.shape[0]//3, 3, order = 'C')
             self.bvh = PybindBVH(self._shape_indices, self._points.ndarray.astype('f4'))
-        elif self._primitiveType == PrimitiveType.POINTS:
+        elif self._primitiveType == BVH.PrimitiveType.POINTS:
             self._shape_indices = self._indices.ndarray.reshape(self._indices.ndarray.shape[0], 1, order = 'C')
             self.bvh = PybindPointsBVH(self._shape_indices, self._points.ndarray.astype('f4'))
-        elif self._primitiveType == PrimitiveType.LINES:
+        elif self._primitiveType == BVH.PrimitiveType.LINES:
             
             indices = Array(ndarray = np.array([0,1,2, 1,2,3, 0,4,2, 2,4,6, 1,5,3, 3,5,7, 4,5,6, 5,6,7, 2,3,6, 3,6,7], 'u4'))
             self._shape_indices = indices.ndarray.reshape(indices.ndarray.shape[0]//3, 3, order = 'C')
@@ -91,21 +93,27 @@ class BVH( Product.Product ):
 
 class Geometry( Product.Product ):
 
+    @QFlag
+    class PrimitiveType(Flag): #for Q_ENUMS: derive from QObject
+        POINTS = gl.GL_POINTS
+        LINES =  gl.GL_LINES
+        LINE_STRIP = gl.GL_LINE_STRIP
+        LINE_LOOP = gl.GL_LINE_LOOP
+        TRIANGLES = gl.GL_TRIANGLES
+        TRIANGLE_STRIP = gl.GL_TRIANGLE_STRIP
+        TRIANGLE_FAN = gl.GL_TRIANGLE_FAN
 
-    def __init__( self, parent=None, indices = None, attribs = None, primitive_type = PrimitiveType.TRIANGLES ):
+    def __init__( self, parent=None, indices = None, attribs = None, primitive_type = gl.GL_TRIANGLES ):
         super(Geometry, self).__init__( parent )
         self._indices = None
         self._attribs = None
-        self._primitiveType = PrimitiveType.TRIANGLES
+        self._primitiveType = Geometry.PrimitiveType.TRIANGLES
         self.bvh = None
 
         self.indices = indices
         self.attribs = attribs
         self.primitiveType = primitive_type
 
-    PrimitiveType = PrimitiveType
-
-    Q_ENUMS(PrimitiveType)
 
     Product.InputProperty(vars(), int, 'primitiveType')
 
@@ -115,7 +123,7 @@ class Geometry( Product.Product ):
 
     def goc_bvh(self, update = False):
 
-        if self.bvh is None and self.primitiveType in [PrimitiveType.TRIANGLES, PrimitiveType.POINTS, PrimitiveType.LINES]:
+        if self.bvh is None and self.primitiveType in [Geometry.PrimitiveType.TRIANGLES, Geometry.PrimitiveType.POINTS, Geometry.PrimitiveType.LINES]:
             self.bvh = BVH(self, self.indices, self.attribs.vertices, self.primitiveType)
         if self.bvh is not None and update:
             self.bvh.update()

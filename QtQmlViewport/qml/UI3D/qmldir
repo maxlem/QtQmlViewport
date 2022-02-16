@@ -6,7 +6,7 @@ MaterialProgram    1.0 Effects/MaterialProgram.qml
 ColorMapProgram    1.0 Effects/ColorMapProgram.qml
 PointsColorProgram 1.0 Effects/PointsColorProgram.qml
 
-#Actors            1.0 Actors/Actors.qml PySide2 workaround
+#Actors            1.0 Actors/Actors.qml #PySide6 workaround
 Line              1.0 Actors/Line.qml
 Points            1.0 Actors/Points.qml
 Box               1.0 Actors/Box.qml

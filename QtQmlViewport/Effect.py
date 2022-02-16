@@ -1,6 +1,6 @@
 from QtQmlViewport import Product
 
-from PyQt5.QtGui import QOpenGLShaderProgram, QOpenGLShader
+from PySide6.QtOpenGL import QOpenGLShaderProgram, QOpenGLShader
 
 class GLSLProgram( Product.Product ):
     def __init__(self, parent = None, vertex_shader = None, geometry_shader = None, fragment_shader = None, uniforms = {}, textures = {}, outputTextures = {}):

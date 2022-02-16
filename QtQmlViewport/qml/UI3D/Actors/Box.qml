@@ -26,7 +26,7 @@ Actor
 
     geometry: Geometry
     {
-        primitiveType: filled ? Geometry.TRIANGLES : Geometry.LINES;
+        // primitiveType: filled ? Geometry.PrimitiveType.TRIANGLES : Geometry.PrimitiveType.LINES;
 
         indices: ArrayUInt1
         {
@@ -68,6 +68,6 @@ Actor
 
     effect: Effect
     {
-        shader0: MaterialProgram{id: program_; }
+        shader0: EmissiveProgram{id: program_; }
     }
 }

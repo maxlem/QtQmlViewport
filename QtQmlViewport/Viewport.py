@@ -3,9 +3,9 @@ from QtQmlViewport.Actors import Actors
 from QtQmlViewport.Camera import Camera
 from QtQmlViewport.Geometry import Geometry, BVH
 
-from PyQt5.QtQuick import QQuickFramebufferObject
-from PyQt5.QtGui import QMatrix4x4, QVector3D, QColor, qRgba
-from PyQt5.QtCore import Qt, QRectF, QTimer
+from PySide6.QtQuick import QQuickFramebufferObject
+from PySide6.QtGui import QMatrix4x4, QVector3D, QColor, qRgba
+from PySide6.QtCore import Qt, QRectF, QTimer
 
 import numpy as np
 import math, traceback, os, warnings
@@ -40,7 +40,7 @@ class Viewport( QQuickFramebufferObject ):
 
     Product.ConstProperty(vars(), Camera, 'camera')
 
-    Product.RWProperty(vars(), 'QVariant', 'backgroundColor')
+    Product.RWProperty(vars(), QColor, 'backgroundColor')
 
     Product.RWProperty(vars(), Actors, 'actors')
 

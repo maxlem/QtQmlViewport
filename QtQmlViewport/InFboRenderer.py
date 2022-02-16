@@ -7,10 +7,11 @@ from future.utils import viewitems
 from inspect import currentframe, getframeinfo
 from OpenGL import GL
 from operator import attrgetter
-from PyQt5.QtQuick import QQuickFramebufferObject
-from PyQt5.QtGui import QMatrix4x4, QVector3D, QVector4D, QOpenGLTexture, QOpenGLContext, QOpenGLBuffer, \
+from PySide6.QtQuick import QQuickFramebufferObject
+from PySide6.QtOpenGL import QOpenGLTexture, QOpenGLBuffer, \
 QOpenGLFramebufferObject, QOpenGLFramebufferObjectFormat, QOpenGLVersionProfile,\
-QOpenGLVertexArrayObject, QSurfaceFormat
+QOpenGLVertexArrayObject
+from PySide6.QtGui import QMatrix4x4, QVector3D, QVector4D
 
 import copy
 import ctypes
@@ -318,7 +319,7 @@ class InFboRenderer( QQuickFramebufferObject.Renderer ):
         
         
         GL.glPrimitiveRestartIndex(0xFFFFFFFF)
-        GL.glDrawBuffers(len(self.draw_buffers), self.draw_buffers)
+        # GL.glDrawBuffers(len(self.draw_buffers), self.draw_buffers)
 
         #opengl_error_check(currentframe())
 

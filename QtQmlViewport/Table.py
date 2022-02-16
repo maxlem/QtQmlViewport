@@ -1,4 +1,4 @@
-from PyQt5 import QtCore, QtGui, QtQml
+from PySide6 import QtCore, QtGui, QtQml
 
 import numpy as np
 import pandas as pd
@@ -28,7 +28,7 @@ class DataFrameModel(QtCore.QAbstractTableModel):
                 return self._dataframe.columns[section]
             else:
                 return str(self._dataframe.index[section])
-        return QtCore.QVariant()
+        return str()
 
     def rowCount(self, parent=QtCore.QModelIndex()):
         if parent.isValid():
@@ -43,7 +43,7 @@ class DataFrameModel(QtCore.QAbstractTableModel):
     def data(self, index, role=QtCore.Qt.DisplayRole):
         if not index.isValid() or not (0 <= index.row() < self.rowCount() \
             and 0 <= index.column() < self.columnCount()):
-            return QtCore.QVariant()
+            return str()
         row = self._dataframe.index[index.row()]
         col = self._dataframe.columns[index.column()]
         dt = self._dataframe[col].dtype
@@ -55,7 +55,7 @@ class DataFrameModel(QtCore.QAbstractTableModel):
             return val
         if role == DataFrameModel.DtypeRole:
             return dt
-        return QtCore.QVariant()
+        return str()
 
     def roleNames(self):
         roles = {

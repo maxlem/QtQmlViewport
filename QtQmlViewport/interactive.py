@@ -1,9 +1,9 @@
 from QtQmlViewport import utils
 
-from PyQt5.QtCore import QVariant, QTimer
-from PyQt5.QtGui import QSurfaceFormat
-from PyQt5.QtQml import QQmlProperty
-from PyQt5.QtWidgets import QApplication
+from PySide6.QtCore import QTimer
+from PySide6.QtGui import QSurfaceFormat
+from PySide6.QtQml import QQmlProperty
+from PySide6.QtWidgets import QApplication
 
 import os
 import sys
@@ -64,7 +64,7 @@ class InteractiveHelper(object):
 
     def write_property(self, name:str, v):
         self._check_view()
-        return QQmlProperty.write(self.root, name, QVariant(v), self.engine)
+        return QQmlProperty.write(self.root, name, v, self.engine)
 
     def read_property(self, name:str):
         self._check_view()

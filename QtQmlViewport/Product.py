@@ -1,6 +1,5 @@
-from PyQt5.QtCore import pyqtSignal as Signal, pyqtProperty as Property, pyqtSlot as Slot, QObject, QTimer, QVariant
-from PyQt5.QtQuick import QQuickItem
-from PyQt5.QtQml import QJSValue
+from PySide6.QtCore import Signal, Property, Slot, QObject, QTimer
+from PySide6.QtQml import QJSValue
 
 import pprint
 import traceback
@@ -62,12 +61,7 @@ class Getter(object):
     def __call__(self, target):
         return getattr(target, self.name)
 
-class QVariantGetter(Getter):
-    def __init__(self, name):
-        super(QVariantGetter, self).__init__(name)
 
-    def __call__(self, target):
-        return QVariant(super(QVariantGetter, self).__call__(target))
 
 class ConstGetter(object):
     def __init__(self, value):
@@ -75,11 +69,6 @@ class ConstGetter(object):
 
     def __call__(self, _):
         return self.value
-
-def select_getter(typename, name):
-    if typename == QVariant:
-        return QVariantGetter(name)
-    return Getter(name)
 
 def goc_member_variable(classvars, name):
     if f'_{name}' not in classvars:
@@ -95,7 +84,7 @@ def RWProperty(classvars, typename, name):
     '''
     goc_member_variable(classvars, name)
     notify = classvars[f'{name}Changed'] = Signal()
-    classvars[f'{name}'] = Property(typename, select_getter(typename, name), Setter(name), notify = notify)
+    classvars[f'{name}'] = Property(typename, Getter(name), Setter(name), notify = notify)
 
 def ROProperty(classvars, typename, name):
     '''
@@ -109,7 +98,7 @@ def ROProperty(classvars, typename, name):
     '''
     goc_member_variable(classvars, name)
     notify = classvars[f'{name}Changed'] = Signal()
-    classvars[f'{name}'] = Property(typename, select_getter(typename, name), notify = notify)
+    classvars[f'{name}'] = Property(typename, Getter(name), notify = notify)
     classvars[f'set_{name}'] = Setter(name)
 
 def ConstProperty(classvars, typename, name):
@@ -122,7 +111,7 @@ def ConstProperty(classvars, typename, name):
         A QProperty is exposed to QML.
     '''
     goc_member_variable(classvars, name)
-    classvars[f'{name}'] = Property(typename, select_getter(typename, name), constant = True)
+    classvars[f'{name}'] = Property(typename, Getter(name), constant = True)
 
 
 
@@ -142,10 +131,10 @@ def InputProperty(classvars, typename, name, callback = None):
     '''
     goc_member_variable(classvars, name)
     notify = classvars[f'{name}Changed'] = Signal()
-    classvars[f'{name}'] = Property(typename, select_getter(typename, name), InputSetter(classvars, name, callback), notify = notify)
+    classvars[f'{name}'] = Property(typename, Getter(name), InputSetter(classvars, name, callback), notify = notify)
 
 
-def Q_ENUMS_mock(classvars, enumclass): #do not use, PySide2 workaround
+def Q_ENUMS_mock(classvars, enumclass): #do not use, PySide6 workaround
 
     values = [a for a in dir(enumclass) if not a.startswith('__') and not callable(getattr(enumclass,a))]
 
@@ -263,23 +252,6 @@ class Product(QObject):
         self.add_dependency(producer)
         producer.productClean.connect(self.makeClean)
 
-
-class VariantProduct(Product):
-    def __init__(self, parent=None, variant=None):
-        super(VariantProduct, self).__init__(parent)
-        self._variant = None
-
-        self.variant = variant #calls the setter
-
-    InputProperty(vars(), 'QVariant', 'variant')
-
-    @Slot(str, result = QVariant)
-    def dictField(self, name):
-        self.update()
-        if isinstance(self._variant, dict):
-            return QVariant(self._variant[name])
-        
-        return None
 
 
 ################################################################################

@@ -1,6 +1,6 @@
 from QtQmlViewport import Effect, Array
 
-from PyQt5.QtGui import QColor, QVector4D, QVector3D, QVector2D
+from PySide6.QtGui import QColor, QVector4D, QVector3D, QVector2D
 
 import numpy as np
  

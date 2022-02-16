@@ -3,9 +3,9 @@ from QtQmlViewport import Array, Product
 
 from datetime import datetime
 from matplotlib import cm
-from PyQt5.QtGui import QImage, qRgb
-from PyQt5.QtQuick import QQuickPaintedItem
-from PyQt5.QtCore import QPointF, pyqtSlot as Slot, pyqtSignal as Signal, pyqtProperty as Property, QVariant
+from PySide6.QtGui import QImage, qRgb
+from PySide6.QtQuick import QQuickPaintedItem
+from PySide6.QtCore import QPointF, Slot, Signal, Property
 
 import matplotlib.pyplot as plt
 import numpy as np

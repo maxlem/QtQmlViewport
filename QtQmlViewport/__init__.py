@@ -3,14 +3,13 @@ from QtQmlViewport.PyBVH import BVH, PointsBVH
 import numpy as np
 import traceback
 
-from PyQt5.QtQml import qmlRegisterType
+from PySide6.QtQml import qmlRegisterType
 
 #generic non-leddar-related modules
 
-from . import Viewport, Camera, Actors, Geometry, Effect, Array, Transforms, Product, CustomAttribs, MPLFigures
+from . import Viewport, Camera, Actors, Geometry, Effect, Array, Transforms, Product, CustomAttribs
 
 qmlRegisterType(Product.Product, "Leddar", 1, 0, "Product" )
-qmlRegisterType(Product.VariantProduct, "Leddar", 1, 0, "VariantProduct" )
 
 qmlRegisterType(Viewport.Viewport, "Leddar", 1, 0, "Viewport" )
 
@@ -29,7 +28,6 @@ qmlRegisterType(Geometry.Geometry, "Leddar", 1, 0, "Geometry" )
 qmlRegisterType(Geometry.Attribs, "Leddar", 1, 0, "Attribs" )
 qmlRegisterType(CustomAttribs.AmplitudeAttribs, "Leddar", 1, 0, "AmplitudeAttribs" )
 qmlRegisterType(CustomAttribs.ColorsAttribs, "Leddar", 1, 0, "ColorsAttribs" )
-# qmlRegisterType(CustomAttribs.SegmentationLabelsAttribs, "Leddar", 1, 0, "SegmentationLabelsAttribs" )
 #
 qmlRegisterType(Array.Array, "Leddar", 1, 0, "Array")
 qmlRegisterType(Array.ArrayFloat1, "Leddar", 1, 0, "ArrayFloat1" )
@@ -48,8 +46,6 @@ qmlRegisterType(Array.ArrayInt1, "Leddar", 1, 0, "ArrayInt1" )
 qmlRegisterType(Effect.GLSLProgram, "Leddar", 1, 0, "GLSLProgram" )
 qmlRegisterType(Effect.Effect, "Leddar", 1, 0, "Effect" )
 
-
-qmlRegisterType(MPLFigures.EchoesMPLFigureProvider, "Leddar", 1, 0, "EchoesMPLFigureProvider" )
 
 #optional modules
 

@@ -3,8 +3,8 @@ from pioneer.common.logging_manager import LoggingManager
 from QtQmlViewport import Actors, Geometry, Effect, Transforms, CustomAttribs, Array, CustomEffects, utils
 
 from matplotlib import colors as mpl_colors, cm
-from PyQt5.QtCore import QPointF
-from PyQt5.QtGui import QMatrix4x4, QVector3D, QQuaternion, QColor, QPainterPath, QFont
+from PySide6.QtCore import QPointF
+from PySide6.QtGui import QMatrix4x4, QVector3D, QQuaternion, QColor, QPainterPath, QFont
 
 import collada
 import os

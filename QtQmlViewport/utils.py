@@ -1,10 +1,10 @@
 from QtQmlViewport import Transforms, Array
 
-from PyQt5.QtCore import QUrl, QTimer, QObject, QVariant, pyqtBoundSignal as BoundSignal
-from PyQt5.QtQuick import QQuickView
-from PyQt5.QtQml import QQmlProperty, QJSValue, QQmlApplicationEngine, qmlRegisterSingletonType
-from PyQt5.QtGui import QGuiApplication, QSurfaceFormat, QVector3D, QVector4D, QMatrix3x3, QMatrix4x4, QQuaternion, QColor, QImage
-from PyQt5.QtWidgets import QApplication
+from PySide6.QtCore import QUrl, QTimer, QObject
+from PySide6.QtQuick import QQuickView
+from PySide6.QtQml import QQmlProperty, QJSValue, QQmlApplicationEngine
+from PySide6.QtGui import QGuiApplication, QSurfaceFormat, QVector3D, QVector4D, QMatrix3x3, QMatrix4x4, QQuaternion, QColor, QImage
+from PySide6.QtWidgets import QApplication
 
 import numpy as np
 import os
@@ -47,14 +47,6 @@ class QmlWrapper(object):
         if isinstance(value, QJSValue):
             return value.toVariant()
 
-        if isinstance(value, BoundSignal):
-            # Workaround for a pqt5 bug where the qmlengine may wait for the first read to property named "name" 
-            # to make the auto-generated signal e.g. "nameChanged" active, we thus ensure property named "name"
-            # is read at least once 
-            match = re.match(r"\d*(\D+)Changed", name)
-            if match:
-                QQmlProperty.read(qobject, match.group(1)) 
-
         if isinstance(value, QObject):
             if name == "qobject":
                 return super().__getattribute__("qobject")
@@ -72,7 +64,7 @@ class QmlWrapper(object):
             setattr(self.qobject, name, value)
             QmlWrapper.warn_name_clash(self.qobject, name)
         else:
-            self[name] = QVariant(value)
+            self[name] = value
 
     def __getitem__(self, property_name):
         ''' Useful to force using QQmlProperty.read() in the case of a name clash '''
@@ -80,7 +72,7 @@ class QmlWrapper(object):
 
     def __setitem__(self, property_name, value):
         ''' Useful to force using QQmlProperty.write() in the case of a name clash '''
-        rv = QQmlProperty.write(self.qobject, property_name, QVariant(value))
+        rv = QQmlProperty.write(self.qobject, property_name, value)
         if not rv:
             warnings.warn(f"QQmlProperty.write() on object {self.qobject} at {property_name} failed!")
         return value
@@ -108,7 +100,7 @@ class ContextCallback(object):
             try:
                 QObject.disconnect(connection)
             except:
-                pass # Probably a PyQt5 bug. At least we tried...
+                pass # Probably a PySide6 bug. At least we tried...
 
     def connect_to(self, signal):
         self.connections.append(signal.connect(self.callback))
