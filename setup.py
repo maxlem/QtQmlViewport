@@ -72,7 +72,7 @@ from subprocess import CalledProcessError
 
 kwargs = dict(
     name='QtQmlViewport',
-    version='0.1',
+    version='0.1.0',
     author='Leddartech',
     description='Python QtQml 3D viewer toolkit',
     long_description='',
@@ -80,6 +80,7 @@ kwargs = dict(
     cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False,
     url="https://github.com/maxlem/QtQmlViewport",
+    download_url="https://github.com/maxlem/QtQmlViewport/archive/refs/tags/0.1.0.tar.gz",
     packages=[
         'QtQmlViewport',
         'QtQmlViewport.qml',
