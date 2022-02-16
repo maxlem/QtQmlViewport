@@ -131,23 +131,13 @@ def multi_windows_vp(script, qml_dirs, img_providers, **kwargs):
     return vp
 
 
-def leddar_vp(script = "root_LeddarVP.qml", qml_dirs = [], img_providers = [], **kwargs):
+def viewport(script = "example.qml", qml_dirs = [], img_providers = [], **kwargs):
     '''
-        Shortcut for creation, set_arg and show for a InteractiveHelper with root_LeddarVP.qml script
+        Shortcut for creation, set_arg and show for a InteractiveHelper with example.qml script
     '''
     vp = InteractiveHelper(utils.try_to_complete_path(script, qml_dirs))
     vp.set_args(**kwargs)
     vp.show()
     vp.hide()
     return vp
-
-def point_cloud(**kwargs):
-    '''
-        Shortcut for creation, set_arg and show for a InteractiveHelper with root_PointCloud.qml script
-    '''
-    pc = InteractiveHelper(utils.try_to_complete_path("root_PointCloud.qml"))
-    pc.set_args(**kwargs)
-    vp.show()
-    vp.hide()
-    return pc
 

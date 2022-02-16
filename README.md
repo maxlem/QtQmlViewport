@@ -1,19 +1,21 @@
-# pioneer.common.gui
+# QtQmlViewport
 
-pioneer.common.ui is a python gui library regrouping all graphical utilities needed by pioneer.das.view and other applications.
+(forked from pioneer.common.ui) This package contains QtQmlViewport which can be used to create a QtQml 3D and 2D user interface using python and QML language.
+
+It also contains PyBVH which is a C++ multi-threaded BVH creation and query library that can be used for sophisticated picking queries on Triangles and Points BVH's
 
 
 ## Installation
 
-Use the package manager to install pioneer.common.gui
+Use the package manager to install QtQmlViewport
 
 ```bash
-pip install pioneer-common-gui
+pip install QtQmlViewport
 ```
 ** Prerequisites **
-To setup pioneer.common.gui in develop mode, you need to have installed **cmake** beforehand.
+To setup QtQmlViewport in develop mode, you need to have installed **cmake** beforehand.
 
-**Eigen3** and **tbb** are also required
+**Eigen3** and **tbb** are also required (for PyBVH)
 ```bash
 sudo apt install libeigen3-dev
 sudo apt install libtbb-dev
@@ -34,8 +36,30 @@ pipenv shell
 
 ## Usage
 
-To run the dasview in the virtual environment, you can use the run command
+
 ```python
-from QtQmlViewport import Actors
+
+from QtQmlViewport import interactive, Actors, Geometry, Array, CustomEffects, CustomActors
+from PyQt5.QtGui import QColor
+import trimesh
+
+trimesh_ = trimesh.load("tmp.stl")
+
+scene_actor = Actors.Actor(
+    geometry = Geometry.Geometry(
+        indices = Array.Array(ndarray = trimesh_.faces.flatten().astype('u4'))
+        , attribs = Geometry.Attribs(
+            vertices = Array.Array(ndarray = trimesh_.vertices)
+            , normals = Array.Array(ndarray = trimesh_.vertex_normals))
+        , primitive_type = Geometry.PrimitiveType.TRIANGLES
+    ), effect = CustomEffects.material(color = QColor("brown"), back_color = QColor("blue"), light_power = 5e1, light_follows_camera = True, shininess = 100.0, reverse_backfaces = False, flat_shading = True)
+    , transform = CustomActors.ensure_Transform(None)
+    , name = "actor"
+)
+
+vp = interactive.viewport("main.qml")
+root = vp.root_wrapper()
+root.actors.addActor(scene_actor)
+vp.wait_key(" ")
 
 ```
