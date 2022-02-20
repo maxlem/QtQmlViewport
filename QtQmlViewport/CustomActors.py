@@ -1,6 +1,4 @@
-from pioneer.common import linalg
-from pioneer.common.logging_manager import LoggingManager
-from QtQmlViewport import Actors, Geometry, Effect, Transforms, CustomAttribs, Array, CustomEffects, utils
+from QtQmlViewport import Actors, Geometry, Effect, Transforms, CustomAttribs, Array, CustomEffects, utils, linalg
 
 from matplotlib import colors as mpl_colors, cm
 from PyQt5.QtCore import QPointF
@@ -16,7 +14,7 @@ import trimesh
 try:
     import transforms3d
 except:
-    LoggingManager.instance().warning("please install transform3d - pip install transform3d")
+    utils.LoggingManager.instance().warning("please install transform3d - pip install transform3d")
 
 def ensure_Transform(tf):
 
@@ -574,7 +572,7 @@ def load_collada(filename, scale = 1, matrix = np.eye(4, dtype = 'f4'), name = "
             elif isinstance(coll_prim, collada.polylist.BoundPolylist):
                 triangles = coll_prim.triangleset()
             else:
-                LoggingManager.instance().warning(f"{type(coll_prim)} not implementend")
+                utils.LoggingManager.instance().warning(f"{type(coll_prim)} not implementend")
                 continue
 
             textures = {}
@@ -597,7 +595,7 @@ def load_collada(filename, scale = 1, matrix = np.eye(4, dtype = 'f4'), name = "
                     uniforms[effect_name] = value
                     effect_signature.append((effect_name, value))
                 elif value is not None:
-                    LoggingManager.instance().warning(f"Unsupported type {effect_name}: {type(value)}")
+                    utils.LoggingManager.instance().warning(f"Unsupported type {effect_name}: {type(value)}")
                 
 
             if not textures and ignore_non_textured:
@@ -628,7 +626,7 @@ def load_collada(filename, scale = 1, matrix = np.eye(4, dtype = 'f4'), name = "
 
             if textures:
                 if len(triangles.texcoordset) > 1:
-                    LoggingManager.instance().warning(f"warning, {type(coll_prim)} not implementend")
+                    utils.LoggingManager.instance().warning(f"warning, {type(coll_prim)} not implementend")
                 orig_tc0 = triangles.texcoordset[0].astype('f4')
                 tc0_idx = triangles.texcoord_indexset[0].flatten()
                 if not np.all(tc0_idx == indices):

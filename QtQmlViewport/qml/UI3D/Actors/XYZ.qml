@@ -7,7 +7,7 @@
 */
 
 import QtQuick 2.5
-import Leddar 1.0
+import Viewport 1.0
 import UI3D 1.0
 Actors
 {

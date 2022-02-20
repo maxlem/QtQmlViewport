@@ -27,10 +27,13 @@ class InputSetter(Setter):
         - a non-member function
         It will be called if (and only if) a new input is set.
     '''
-    def __init__(self, classvars, name, callback = None):
+    def __init__(self, classvars, name, callback = None, before_write_callback = None):
         super(InputSetter, self).__init__(name)
         self.callback_name = None
         self.callback = None
+        self.before_write_callback_name = None
+        self.before_write_callback = None
+        
         if callback is not None:
             if callable(callback):
                 if callback.__name__ in classvars: #is member function
@@ -42,6 +45,17 @@ class InputSetter(Setter):
                     self.callback_name = callback
                 else:
                     raise RuntimeError(f'{callback} is not a member function')
+        if before_write_callback is not None:
+            if callable(before_write_callback):
+                if before_write_callback.__name__ in classvars: #is member function
+                    self.before_write_callback_name = before_write_callback.__name__
+                else:
+                    self.before_write_callback = before_write_callback
+            elif isinstance(before_write_callback, str) :
+                if callable(getattr(classvars, before_write_callback)):
+                    self.before_write_callback_name = before_write_callback
+                else:
+                    raise RuntimeError(f'{before_write_callback} is not a member function')
 
 
     def __call__(self, target, new_val):
@@ -126,7 +140,7 @@ def ConstProperty(classvars, typename, name):
 
 
 
-def InputProperty(classvars, typename, name, callback = None):
+def InputProperty(classvars, typename, name, callback = None, before_write_callback = None):
     '''
         This function adds a QProperty named 'name' to a class's vars() dictionary.
         It create the getter, setter, and signal named 'nameChanged'.
@@ -139,10 +153,12 @@ def InputProperty(classvars, typename, name, callback = None):
         An InputProperty is a property that turns a product dirty when needed.
         It can be a primitive type (e.g. int, string, bool, etc) or a Product,
         or a collection containing products
+
+        'before_write_callback' will be called before assignment (an assignment operation will occurs only if new value is different from old value)
     '''
     goc_member_variable(classvars, name)
     notify = classvars[f'{name}Changed'] = Signal()
-    classvars[f'{name}'] = Property(typename, select_getter(typename, name), InputSetter(classvars, name, callback), notify = notify)
+    classvars[f'{name}'] = Property(typename, select_getter(typename, name), InputSetter(classvars, name, callback, before_write_callback), notify = notify)
 
 
 def Q_ENUMS_mock(classvars, enumclass): #do not use, PySide2 workaround
@@ -329,7 +345,7 @@ def convert_to_dict(obj):
                 dict_[key] = attr
     return dict_
 
-def assign_input(product, property_name, value):
+def assign_input(product, property_name, value, before_write_callback = None):
 
     value = cvt_if_js_value(value)
 
@@ -348,6 +364,8 @@ def assign_input(product, property_name, value):
         rv = True
 
     if  rv:
+        if before_write_callback is not None:
+            before_write_callback()
         recurse_types(product.remove_dependency, current)
 
         setattr(product, variable_name, value)

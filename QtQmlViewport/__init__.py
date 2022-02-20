@@ -7,63 +7,45 @@ from PyQt5.QtQml import qmlRegisterType
 
 #generic non-leddar-related modules
 
-from . import Viewport, Camera, Actors, Geometry, Effect, Array, Transforms, Product, CustomAttribs, MPLFigures
+from . import Viewport, Camera, Actors, Geometry, Effect, Array, Transforms, Product, CustomAttribs
 
-qmlRegisterType(Product.Product, "Leddar", 1, 0, "Product" )
-qmlRegisterType(Product.VariantProduct, "Leddar", 1, 0, "VariantProduct" )
+qmlRegisterType(Product.Product, "Viewport", 1, 0, "Product" )
+qmlRegisterType(Product.VariantProduct, "Viewport", 1, 0, "VariantProduct" )
 
-qmlRegisterType(Viewport.Viewport, "Leddar", 1, 0, "Viewport" )
+qmlRegisterType(Viewport.Viewport, "Viewport", 1, 0, "Viewport" )
 
-qmlRegisterType(Camera.Camera, "Leddar", 1, 0, "Camera" )
+qmlRegisterType(Camera.Camera, "Viewport", 1, 0, "Camera" )
 
-qmlRegisterType(Actors.Renderable, "Leddar", 1, 0, "Renderable" )
-qmlRegisterType(Actors.Actor, "Leddar", 1, 0, "Actor" )
-qmlRegisterType(Actors.Actors, "Leddar", 1, 0, "Actors" )
+qmlRegisterType(Actors.Renderable, "Viewport", 1, 0, "Renderable" )
+qmlRegisterType(Actors.Actor, "Viewport", 1, 0, "Actor" )
+qmlRegisterType(Actors.Actors, "Viewport", 1, 0, "Actors" )
 #
-qmlRegisterType(Transforms.Transform, "Leddar", 1, 0, "Transform" )
-qmlRegisterType(Transforms.Translation, "Leddar", 1, 0, "Translation" )
-qmlRegisterType(Transforms.Rotation, "Leddar", 1, 0, "Rotation" )
-qmlRegisterType(Transforms.MatrixTransform, "Leddar", 1, 0, "MatrixTransform" )
+qmlRegisterType(Transforms.Transform, "Viewport", 1, 0, "Transform" )
+qmlRegisterType(Transforms.Translation, "Viewport", 1, 0, "Translation" )
+qmlRegisterType(Transforms.Rotation, "Viewport", 1, 0, "Rotation" )
+qmlRegisterType(Transforms.MatrixTransform, "Viewport", 1, 0, "MatrixTransform" )
 #
-qmlRegisterType(Geometry.Geometry, "Leddar", 1, 0, "Geometry" )
-qmlRegisterType(Geometry.Attribs, "Leddar", 1, 0, "Attribs" )
-qmlRegisterType(CustomAttribs.AmplitudeAttribs, "Leddar", 1, 0, "AmplitudeAttribs" )
-qmlRegisterType(CustomAttribs.ColorsAttribs, "Leddar", 1, 0, "ColorsAttribs" )
-# qmlRegisterType(CustomAttribs.SegmentationLabelsAttribs, "Leddar", 1, 0, "SegmentationLabelsAttribs" )
+qmlRegisterType(Geometry.Geometry, "Viewport", 1, 0, "Geometry" )
+qmlRegisterType(Geometry.Attribs, "Viewport", 1, 0, "Attribs" )
+qmlRegisterType(CustomAttribs.AmplitudeAttribs, "Viewport", 1, 0, "AmplitudeAttribs" )
+qmlRegisterType(CustomAttribs.ColorsAttribs, "Viewport", 1, 0, "ColorsAttribs" )
 #
-qmlRegisterType(Array.Array, "Leddar", 1, 0, "Array")
-qmlRegisterType(Array.ArrayFloat1, "Leddar", 1, 0, "ArrayFloat1" )
-qmlRegisterType(Array.ArrayFloat2, "Leddar", 1, 0, "ArrayFloat2" )
-qmlRegisterType(Array.ArrayFloat3, "Leddar", 1, 0, "ArrayFloat3" )
-qmlRegisterType(Array.ArrayFloat4, "Leddar", 1, 0, "ArrayFloat4" )
-qmlRegisterType(Array.ArrayShort512, "Leddar", 1, 0, "ArrayShort512")
-qmlRegisterType(Array.ArrayUShort1, "Leddar", 1, 0, "ArrayUShort1")
+qmlRegisterType(Array.Array, "Viewport", 1, 0, "Array")
+qmlRegisterType(Array.ArrayFloat1, "Viewport", 1, 0, "ArrayFloat1" )
+qmlRegisterType(Array.ArrayFloat2, "Viewport", 1, 0, "ArrayFloat2" )
+qmlRegisterType(Array.ArrayFloat3, "Viewport", 1, 0, "ArrayFloat3" )
+qmlRegisterType(Array.ArrayFloat4, "Viewport", 1, 0, "ArrayFloat4" )
+qmlRegisterType(Array.ArrayShort512, "Viewport", 1, 0, "ArrayShort512")
+qmlRegisterType(Array.ArrayUShort1, "Viewport", 1, 0, "ArrayUShort1")
 
-qmlRegisterType(Array.ArrayUInt1, "Leddar", 1, 0, "ArrayUInt1" )
-qmlRegisterType(Array.ArrayUByte3, "Leddar", 1, 0, "ArrayUByte3" )
-qmlRegisterType(Array.ArrayUByte4, "Leddar", 1, 0, "ArrayUByte4" )
+qmlRegisterType(Array.ArrayUInt1, "Viewport", 1, 0, "ArrayUInt1" )
+qmlRegisterType(Array.ArrayUByte3, "Viewport", 1, 0, "ArrayUByte3" )
+qmlRegisterType(Array.ArrayUByte4, "Viewport", 1, 0, "ArrayUByte4" )
 
-qmlRegisterType(Array.ArrayInt1, "Leddar", 1, 0, "ArrayInt1" )
+qmlRegisterType(Array.ArrayInt1, "Viewport", 1, 0, "ArrayInt1" )
 
-qmlRegisterType(Effect.GLSLProgram, "Leddar", 1, 0, "GLSLProgram" )
-qmlRegisterType(Effect.Effect, "Leddar", 1, 0, "Effect" )
-
-
-qmlRegisterType(MPLFigures.EchoesMPLFigureProvider, "Leddar", 1, 0, "EchoesMPLFigureProvider" )
-
-#optional modules
-
-# try:
-#     from . import PySpinCamera
-#     qmlRegisterType(PySpinCamera.PySpinCamera, "Leddar", 1, 0, "PySpinCamera")
-# except:
-#     print(traceback.format_exc())
-
-# try:
-#     from . import V4LCamera
-#     qmlRegisterType(V4LCamera.V4LCamera, "Leddar", 1, 0, "V4LCamera")
-# except:
-#     print(traceback.format_exc())
+qmlRegisterType(Effect.GLSLProgram, "Viewport", 1, 0, "GLSLProgram" )
+qmlRegisterType(Effect.Effect, "Viewport", 1, 0, "Effect" )
 
 
 def merge_bvhs(bvhs, matrices = None):

@@ -1,5 +1,5 @@
 import QtQuick 2.9
-import Leddar 1.0
+import Viewport 1.0
 
 QImagePainter
 {

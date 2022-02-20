@@ -1,7 +1,5 @@
-from pioneer.common import times
-from pioneer.common.logging_manager import LoggingManager
 from QtQmlViewport import Array
-from QtQmlViewport import utils
+from QtQmlViewport.utils import LoggingManager
 
 from future.utils import viewitems
 from inspect import currentframe, getframeinfo

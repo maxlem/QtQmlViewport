@@ -3,8 +3,6 @@ from . import PointsBVH as PybindPointsBVH
 from QtQmlViewport import Product
 from QtQmlViewport.Array import Array
 
-import pioneer.common as leddar_utils
-
 from OpenGL import GL as gl
 from PyQt5.QtCore import QObject, Q_ENUMS
 

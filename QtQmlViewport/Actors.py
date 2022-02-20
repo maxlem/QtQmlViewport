@@ -1,4 +1,3 @@
-from pioneer.common import linalg
 from QtQmlViewport import Product, BVH
 from QtQmlViewport.Effect import Effect
 from QtQmlViewport.Geometry import Geometry
