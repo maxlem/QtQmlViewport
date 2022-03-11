@@ -1,13 +1,18 @@
 from QtQmlViewport.PyBVH import BVH, PointsBVH
-
+from QtQmlViewport import linalg
 import numpy as np
 import traceback
 
-from PyQt5.QtQml import qmlRegisterType
+from PyQt5.QtQml import qmlRegisterType, qmlRegisterSingletonType
 
 #generic non-leddar-related modules
 
-from . import Viewport, Camera, Actors, Geometry, Effect, Array, Transforms, Product, CustomAttribs
+from . import Viewport, Camera, Actors, Geometry, Effect, Array, Transforms, Product, CustomAttribs, CustomEffects
+
+
+
+
+
 
 qmlRegisterType(Product.Product, "Viewport", 1, 0, "Product" )
 qmlRegisterType(Product.VariantProduct, "Viewport", 1, 0, "VariantProduct" )
@@ -46,7 +51,7 @@ qmlRegisterType(Array.ArrayInt1, "Viewport", 1, 0, "ArrayInt1" )
 
 qmlRegisterType(Effect.GLSLProgram, "Viewport", 1, 0, "GLSLProgram" )
 qmlRegisterType(Effect.Effect, "Viewport", 1, 0, "Effect" )
-
+qmlRegisterSingletonType(CustomEffects.MaterialGLSL, "Viewport", 1, 0, "MaterialGLSL", CustomEffects.get_MaterialGLSL)
 
 def merge_bvhs(bvhs, matrices = None):
 

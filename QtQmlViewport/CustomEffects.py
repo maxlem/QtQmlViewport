@@ -1,9 +1,9 @@
-from QtQmlViewport import Effect, Array
+from QtQmlViewport import Effect, Array, utils
 
 from PyQt5.QtGui import QColor, QVector4D, QVector3D, QVector2D
-
+from PyQt5.QtCore import QObject, pyqtProperty as Property, pyqtSignal as Signal, pyqtSlot as Slot
 import numpy as np
- 
+
 def point_colors(line_width = 1, point_size = 1):
     return Effect.Effect(name = "point_colors"
     , line_width = line_width
@@ -235,9 +235,9 @@ def material(color = QColor("red")
                     , 'reverse_backfaces' : reverse_backfaces
                     , 'flat_shading': flat_shading
                     }
-        , vertex_shader = MATERIAL_VERTEX_SHADER
-        , geometry_shader= MATERIAL_GEOMETRY_SHADER
-        , fragment_shader = MATERIAL_FRAGMENT_SHADER.format("color")
+        , vertex_shader   = MaterialGLSL.VERTEX_SHADER
+        , geometry_shader = MaterialGLSL.GEOMETRY_SHADER
+        , fragment_shader = MaterialGLSL.FRAGMENT_SHADER.format("color")
     ))
 
 def textured_material(\
@@ -246,8 +246,8 @@ def textured_material(\
 , back_color = QColor("red")
 , ambient_color = QColor.fromRgbF(.1, .1, .1, 1.0)
 , specular_color = QColor.fromRgbF(.1, .1, .1, 1.0)
-, light_power = 1e3 #light power should be roughly ("sight distance")^2
-, shininess = 0.01
+, light_power = 5e1 #light power should be roughly ("sight distance")^2
+, shininess = 100 # less is more
 , light_follows_camera = True
 , light_position = QVector3D(0,0,-10)
 , reverse_backfaces = True
@@ -270,12 +270,29 @@ def textured_material(\
                     , 'reverse_backfaces' : reverse_backfaces
                     , 'flat_shading': flat_shading}
         , textures = textures
-        , vertex_shader = MATERIAL_VERTEX_SHADER
-        , geometry_shader= MATERIAL_GEOMETRY_SHADER
-        , fragment_shader = MATERIAL_FRAGMENT_SHADER.format("texture2D(diffuse, diffuse_tc.st)")
+        , vertex_shader = MaterialGLSL.VERTEX_SHADER
+        , geometry_shader= MaterialGLSL.GEOMETRY_SHADER
+        , fragment_shader = MaterialGLSL.FRAGMENT_SHADER.format("texture2D(diffuse, diffuse_tc.st)")
     ))
 
-MATERIAL_VERTEX_SHADER = \
+
+__singletons = QObject()
+
+def get_MaterialGLSL(*args):
+    try:
+        return __singletons._MaterialGLSL
+    except AttributeError:
+        __singletons._MaterialGLSL = MaterialGLSL()
+        return __singletons._MaterialGLSL
+class MaterialGLSL(QObject):
+    def __init__(self, parent = None):
+        super().__init__(parent)
+
+
+    @Property(type = str, constant = True)
+    def vertexShader(self):
+        return MaterialGLSL.VERTEX_SHADER    
+    VERTEX_SHADER = \
         '''
         #version 410
         //inspired from https://github.com/pycollada/pycollada/blob/master/examples/daeview/renderer/shaders.py
@@ -321,93 +338,99 @@ MATERIAL_VERTEX_SHADER = \
             diffuse_tc = texcoords0;
         }
         '''
-MATERIAL_GEOMETRY_SHADER = \
-    '''
-    #version 410
-
-    layout( triangles ) in;
-    layout(triangle_strip, max_vertices=3) out;
-
-    uniform bool flat_shading = false;
-
-    in vec3 vertex_position[3], normal_direction[3], light_direction[3], view_direction[3];
-    in float distance[3];
-    in vec2 diffuse_tc[3];
-
-    out vec3 g_normal_direction, g_light_direction, g_view_direction;
-    out float g_distance;
-    out vec2 g_diffuse_tc;
-
-    void main() {
-
-        // calculate flat normal
-        vec3 oa=vertex_position[1]-vertex_position[0];
-        vec3 ob=vertex_position[2]-vertex_position[0];
-        vec3 flat_norm=normalize(cross(oa, ob));
-        for(int i=0; i<3; i++){
-            // preparing vertex data for emiting
-            gl_Position=gl_in[i].gl_Position;
-            // switch between flat and smooth shading
-            g_normal_direction = flat_shading ? flat_norm : normal_direction[i];
-            g_light_direction = light_direction[i];
-            g_view_direction = view_direction[i];
-            g_distance = distance[i];
-            g_diffuse_tc = diffuse_tc[i];
-            EmitVertex();
-        }
-        // after assembling...
-        EndPrimitive();
-    }
-    
-    
-    '''
-MATERIAL_FRAGMENT_SHADER = \
+    @Property(type = str, constant = True)
+    def geometryShader(self):
+        return MaterialGLSL.GEOMETRY_SHADER
+    GEOMETRY_SHADER = \
         '''
         #version 410
-        in vec3 g_normal_direction, g_light_direction, g_view_direction;
-        in float g_distance;
-        in vec2 g_diffuse_tc;
-        uniform sampler2D diffuse;
-        uniform float light_power;
-        uniform float shininess;
-        uniform vec4 color;
-        uniform vec4 back_color;
-        uniform vec4 ambient_color;
-        uniform vec4 specular_color;
-        uniform bool reverse_backfaces;
-        layout(location = 0) out vec4 frag_color;
-        layout(location = 1) out vec4 frag_color_copy;
 
-        void main (void)
-        {{
-            vec4 final_color = back_color;
+        layout( triangles ) in;
+        layout(triangle_strip, max_vertices=3) out;
 
-            //https://en.wikipedia.org/wiki/Phong_reflection_model
+        uniform bool flat_shading = false;
 
-            vec3 N = normalize(g_normal_direction); //surface normal
-            vec3 L = normalize(g_light_direction); //direction toward light source
+        in vec3 vertex_position[3], normal_direction[3], light_direction[3], view_direction[3];
+        in float distance[3];
+        in vec2 diffuse_tc[3];
 
-            float lambertian = dot(L, N);
+        out vec3 g_normal_direction, g_light_direction, g_view_direction;
+        out float g_distance;
+        out vec2 g_diffuse_tc;
 
+        void main() {
 
-            if(reverse_backfaces && lambertian < 0.0)
-            {{
-                lambertian = -lambertian;
-                N = -N;
-            }}
-
-            if(lambertian > 0.0)
-            {{
-                vec3 V = normalize(g_view_direction); //direction toward eye
-                
-                vec3 R = normalize(reflect(-L, N)); 
-                // reflect is a shortcut for I - 2*dot(N, I)*N, see https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/reflect.xhtml
-                // we negate L since I stands for "incident light", L stands for "toward light source"
-
-                float specular = pow( max( dot(R, V), 0.0), shininess );
-                
-                final_color = vec4({0}.xyz * light_power * (ambient_color.xyz * lambertian + specular_color.xyz * specular)/(g_distance*g_distance), 1);
-            }}
-            frag_color_copy = frag_color = final_color;
-        }}
+            // calculate flat normal
+            vec3 oa=vertex_position[1]-vertex_position[0];
+            vec3 ob=vertex_position[2]-vertex_position[0];
+            vec3 flat_norm=normalize(cross(oa, ob));
+            for(int i=0; i<3; i++){
+                // preparing vertex data for emiting
+                gl_Position=gl_in[i].gl_Position;
+                // switch between flat and smooth shading
+                g_normal_direction = flat_shading ? flat_norm : normal_direction[i];
+                g_light_direction = light_direction[i];
+                g_view_direction = view_direction[i];
+                g_distance = distance[i];
+                g_diffuse_tc = diffuse_tc[i];
+                EmitVertex();
+            }
+            // after assembling...
+            EndPrimitive();
+        }
+        
+        
         '''
+    @Property(type = str, constant = True)
+    def fragmentShader(self):
+        return MaterialGLSL.FRAGMENT_SHADER.format("color")
+    FRAGMENT_SHADER = \
+            '''
+            #version 410
+            in vec3 g_normal_direction, g_light_direction, g_view_direction;
+            in float g_distance;
+            in vec2 g_diffuse_tc;
+            uniform sampler2D diffuse;
+            uniform float light_power;
+            uniform float shininess;
+            uniform vec4 color;
+            uniform vec4 back_color;
+            uniform vec4 ambient_color;
+            uniform vec4 specular_color;
+            uniform bool reverse_backfaces;
+            layout(location = 0) out vec4 frag_color;
+            layout(location = 1) out vec4 frag_color_copy;
+
+            void main (void)
+            {{
+                vec4 final_color = back_color;
+
+                //https://en.wikipedia.org/wiki/Phong_reflection_model
+
+                vec3 N = normalize(g_normal_direction); //surface normal
+                vec3 L = normalize(g_light_direction); //direction toward light source
+
+                float lambertian = dot(L, N);
+
+
+                if(reverse_backfaces && lambertian < 0.0)
+                {{
+                    lambertian = -lambertian;
+                    N = -N;
+                }}
+
+                if(lambertian > 0.0)
+                {{
+                    vec3 V = normalize(g_view_direction); //direction toward eye
+                    
+                    vec3 R = normalize(reflect(-L, N)); 
+                    // reflect is a shortcut for I - 2*dot(N, I)*N, see https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/reflect.xhtml
+                    // we negate L since I stands for "incident light", L stands for "toward light source"
+
+                    float specular = pow( max( dot(R, V), 0.0), shininess );
+                    
+                    final_color = vec4({0}.xyz * light_power * (ambient_color.xyz * lambertian + specular_color.xyz * specular)/(g_distance*g_distance), 1);
+                }}
+                frag_color_copy = frag_color = final_color;
+            }}
+            '''

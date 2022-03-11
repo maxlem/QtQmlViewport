@@ -20,6 +20,7 @@ Actor
 
     property var min : center.map(function(c, i){return c - dimensions[i]/2})
     property var max : center.map(function(c, i){return c + dimensions[i]/2})
+    property alias materialProgram: program_
     property alias color: program_.color
 
     property bool filled: true
