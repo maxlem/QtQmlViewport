@@ -201,18 +201,23 @@ class InFboRenderer( QQuickFramebufferObject.Renderer ):
                 indices = actor.geometry.indices
                 attribs = actor.geometry.attribs.get_attributes()
 
-                bo_actor = {"attribs": {}
-                , "textures": {}
-                , "out_textures": {}
-                , "uniforms": copy.deepcopy(actor.effect.shader0.uniforms)
-                , "indices": None
-                , "program": actor.effect.shader0._program
-                , "point_size": actor.effect.pointSize
-                , "line_width": actor.effect.lineWidth
-                , "transform" : actor.transform.worldTransform() if actor.transform else QMatrix4x4()
-                , "primitiveType": actor.geometry.primitiveType
-                , "actor_not_thread_safe": actor}
 
+                try:
+                    bo_actor = {"attribs": {}
+                    , "textures": {}
+                    , "out_textures": {}
+                    , "uniforms": copy.deepcopy(actor.effect.shader0.uniforms)
+                    , "indices": None
+                    , "program": actor.effect.shader0._program
+                    , "point_size": actor.effect.pointSize
+                    , "line_width": actor.effect.lineWidth
+                    , "transform" : actor.transform.worldTransform() if actor.transform else QMatrix4x4()
+                    , "primitiveType": actor.geometry.primitiveType
+                    , "actor_not_thread_safe": actor}
+                except Exception as e:
+                    LoggingManager.instance().warning(f'actor {actor} is in error : {e}')
+                    continue
+                
                 for name, value in viewitems(attribs):
                     if value is None:
                         continue

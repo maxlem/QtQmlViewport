@@ -183,7 +183,7 @@ class Viewport( QQuickFramebufferObject ):
                         if real_distance < min_t:
                             min_t = real_distance
                             min_result = (actor, bvh.indices.ndarray[object_id, None], np.array([[t, distance, real_distance]]), world_origin, world_direction, local_origin, local_direction)                       
-
+                    
         
         if min_result is not None:
             return min_result
@@ -259,13 +259,28 @@ class Viewport( QQuickFramebufferObject ):
         pass
 
     def hoverMoveEvent(self, event):
+
+        hovered = set(filter(lambda actor:actor.mouseOver, self.renderer.sorted_actors))
+        any_picked = False
         try:
             actor, ids, tuvs, world_origin, world_direction, local_origin, local_direction = self.pick(event.pos().x(), event.pos().y(), event.modifiers())
-            self.signal_helper(actor.hovered, event, ids, tuvs, world_origin, world_direction, local_origin, local_direction)
+            any_picked = True
+            if actor in hovered:
+                self.signal_helper(actor.hoverMove, event, ids, tuvs, world_origin, world_direction, local_origin, local_direction)
+                hovered.remove(actor)
+            else:
+                self.signal_helper(actor.hoverEnter, event, ids, tuvs, world_origin, world_direction, local_origin, local_direction)
+                actor.mouseOver = True
+
         except NothingToPickException:
             pass
         except:
             traceback.print_exc()
+
+        for actor in hovered:
+            if any_picked:
+                self.signal_helper(actor.hoverLeave, event, ids, tuvs, world_origin, world_direction, local_origin, local_direction)
+            actor.mouseOver = False
 
     def mouseMoveEvent(self, event):
         """

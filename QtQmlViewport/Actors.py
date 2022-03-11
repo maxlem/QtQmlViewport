@@ -18,6 +18,7 @@ class Actor( Renderable ):
 
     def __init__( self, parent = None, geometry = None, effect = None, transform = None, name = None, visible = True, bbox = None, type_id = -1, instance_id = -1):
         super(Actor, self).__init__( parent )
+        self._mouseOver = False
         self._geometry = None
         self._effect  = None
         self._transform = None
@@ -37,8 +38,14 @@ class Actor( Renderable ):
 
     clicked = Signal(int, 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVariant', 'QVariant'
                          , arguments = ['id', 'tuv', 'worldOrigin', 'worldDirection', 'localOrigin', 'localDirection', 'event', 'viewport'] )
-    hovered = Signal(int, 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVariant', 'QVariant'
+    hoverMove = Signal(int, 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVariant', 'QVariant'
                          , arguments = ['id', 'tuv', 'worldOrigin', 'worldDirection', 'localOrigin', 'localDirection', 'event', 'viewport'] )
+    hoverEnter = Signal(int, 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVariant', 'QVariant'
+                         , arguments = ['id', 'tuv', 'worldOrigin', 'worldDirection', 'localOrigin', 'localDirection', 'event', 'viewport'] )
+    hoverLeave = Signal(int, 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVariant', 'QVariant'
+                         , arguments = ['id', 'tuv', 'worldOrigin', 'worldDirection', 'localOrigin', 'localDirection', 'event', 'viewport'] )
+
+    Product.InputProperty(vars(), bool, 'mouseOver')
 
     Product.InputProperty(vars(), Geometry, 'geometry')
 
@@ -58,7 +65,7 @@ class Actors( Renderable ):
         super(Actors, self).__init__( parent )
         self.setObjectName(name)
         self._renderables = []
-        self._instanciator = None
+        self._instantiator = None
         self._manually_added = []
         self.bbox = bbox
         self.scale = scale
@@ -78,7 +85,7 @@ class Actors( Renderable ):
     def renderables(self):
         return QQmlListProperty(Renderable, self, self._renderables)
 
-    Product.InputProperty(vars(), QObject, 'instanciator')
+    Product.InputProperty(vars(), QObject, 'instantiator')
 
     @Slot(Renderable)
     def addActor(self, actor):
@@ -102,7 +109,7 @@ class Actors( Renderable ):
         self.makeDirty()
 
     def children_actors(self):
-        qml = [] if self._instanciator is None else self._instanciator.children()
+        qml = [] if self._instantiator is None else self._instantiator.children()
         return self._manually_added + self._renderables + qml
 
     def actor_to_id(self, id_to_actors = None):
@@ -193,8 +200,8 @@ class Actors( Renderable ):
             if recursive_check(ma):
                 return True
 
-        if self._instanciator:
-            for c in self._instanciator.children():
+        if self._instantiator:
+            for c in self._instantiator.children():
                 if recursive_check(ma):
                     return True
         
@@ -216,8 +223,8 @@ class Actors( Renderable ):
         for ma in self._manually_added:
             add_actor(ma)
 
-        if self._instanciator:
-            for c in self._instanciator.children():
+        if self._instantiator:
+            for c in self._instantiator.children():
                 add_actor(c)
         
 
