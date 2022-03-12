@@ -135,7 +135,7 @@ def viewport(script = "example.qml", qml_dirs = [], img_providers = [], **kwargs
     '''
         Shortcut for creation, set_arg and show for a InteractiveHelper with example.qml script
     '''
-    vp = InteractiveHelper(utils.try_to_complete_path(script, qml_dirs))
+    vp = InteractiveHelper(utils.try_to_complete_path(script, qml_dirs), qml_dirs)
     vp.set_args(**kwargs)
     vp.show()
     vp.hide()

@@ -267,8 +267,9 @@ class Product(QObject):
 
     def remove_dependency(self, d):
         if d is not None:
-            self._dependencies.remove(d)
-            d.productDirty.disconnect(self.makeDirty)
+            if d in self._dependencies:
+                self._dependencies.remove(d)
+                d.productDirty.disconnect(self.makeDirty)
             self.makeDirty()
 
     def set_producer(self, producer):
