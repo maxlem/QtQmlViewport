@@ -15,10 +15,9 @@ pip install QtQmlViewport
 ** Prerequisites **
 To setup QtQmlViewport in develop mode, you need to have installed **cmake** beforehand.
 
-**Eigen3** and **tbb** are also required (for PyBVH)
+**Eigen3**, **tbb** and **pybind11** are also required (for PyBVH)
 ```bash
-sudo apt install libeigen3-dev
-sudo apt install libtbb-dev
+sudo apt install libeigen3-dev libtbb-dev pybind11-dev
 ```
 
 When developing, you can link the repository to your python site-packages and enable hot-reloading of the package
