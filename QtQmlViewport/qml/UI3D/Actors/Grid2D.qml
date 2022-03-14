@@ -21,7 +21,7 @@ Actor
 
     property real span : 250
     property real div : 5
-    property bool isXY: false
+    property bool isXY: true
 
 
     geometry: Geometry

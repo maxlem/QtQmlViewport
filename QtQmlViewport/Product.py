@@ -59,7 +59,7 @@ class InputSetter(Setter):
 
 
     def __call__(self, target, new_val):
-        if assign_input(target, self.property_name, new_val):
+        if assign_input(target, self.property_name, new_val, self.before_write_callback):
             try:
 
                 if self.callback_name is not None: #member function
@@ -147,14 +147,14 @@ def InputProperty(classvars, typename, name, callback = None, before_write_callb
 
         *Important* a member variable named '_name' will be expected by the getter and setter.
 
-        'callback' will be called if
+        'callback()->None' will be called if
         (and only if) a new value is set. see InputSetter for more information on 'callback'
         A QProperty is exposed to QML.
         An InputProperty is a property that turns a product dirty when needed.
         It can be a primitive type (e.g. int, string, bool, etc) or a Product,
         or a collection containing products
 
-        'before_write_callback' will be called before assignment (an assignment operation will occurs only if new value is different from old value)
+        'before_write_callback(value) -> value' will be called before assignment (an assignment operation will occurs only if new value is different from old value)
     '''
     goc_member_variable(classvars, name)
     notify = classvars[f'{name}Changed'] = Signal()
@@ -366,7 +366,7 @@ def assign_input(product, property_name, value, before_write_callback = None):
 
     if  rv:
         if before_write_callback is not None:
-            before_write_callback()
+            value = before_write_callback(value)
         recurse_types(product.remove_dependency, current)
 
         setattr(product, variable_name, value)

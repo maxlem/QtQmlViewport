@@ -4,7 +4,7 @@ from QtQmlViewport.Geometry import Geometry
 from QtQmlViewport.Transforms import Transform
 from QtQmlViewport.utils import to_numpy, tf_to_numpy
 
-from PyQt5.QtGui import QColor
+from PyQt5.QtGui import QVector3D
 from PyQt5.QtCore import pyqtProperty as Property, pyqtSignal as Signal, pyqtSlot as Slot, QObject, Q_CLASSINFO
 from PyQt5.QtQml import QQmlListProperty
 
@@ -18,6 +18,7 @@ class Actor( Renderable ):
 
     def __init__( self, parent = None, geometry = None, effect = None, transform = None, name = None, visible = True, bbox = None, type_id = -1, instance_id = -1):
         super(Actor, self).__init__( parent )
+        self._clickable = True
         self._mouseOver = False
         self._geometry = None
         self._effect  = None
@@ -36,14 +37,18 @@ class Actor( Renderable ):
         self.visible = visible
 
 
-    clicked = Signal(int, 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVariant', 'QVariant'
+    click = Signal(int, 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVariant', 'QVariant'
                          , arguments = ['id', 'tuv', 'worldOrigin', 'worldDirection', 'localOrigin', 'localDirection', 'event', 'viewport'] )
+    move = Signal('QVector3D', 'QVector3D', 'QVariant', 'QVariant'
+                         , arguments = ['worldOrigin', 'worldDirection', 'event', 'viewport'] )
     hoverMove = Signal(int, 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVariant', 'QVariant'
                          , arguments = ['id', 'tuv', 'worldOrigin', 'worldDirection', 'localOrigin', 'localDirection', 'event', 'viewport'] )
     hoverEnter = Signal(int, 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVariant', 'QVariant'
                          , arguments = ['id', 'tuv', 'worldOrigin', 'worldDirection', 'localOrigin', 'localDirection', 'event', 'viewport'] )
-    hoverLeave = Signal(int, 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVariant', 'QVariant'
-                         , arguments = ['id', 'tuv', 'worldOrigin', 'worldDirection', 'localOrigin', 'localDirection', 'event', 'viewport'] )
+    hoverLeave = Signal('QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVariant', 'QVariant'
+    , arguments = ['worldOrigin', 'worldDirection', 'localOrigin', 'localDirection', 'event', 'viewport'])
+
+    Product.InputProperty(vars(), bool, 'clickable')
 
     Product.InputProperty(vars(), bool, 'mouseOver')
 
@@ -56,6 +61,8 @@ class Actor( Renderable ):
     Product.InputProperty(vars(), bool, 'visible')
 
     Product.InputProperty(vars(), int, 'renderRank')
+
+
 
 
 

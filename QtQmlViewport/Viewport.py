@@ -12,8 +12,9 @@ import math, traceback, os, warnings
 
 
 class NothingToPickException(Exception):
-    def __init__(self):
+    def __init__(self, world_origin, world_direction, local_origin, local_direction):
         super().__init__('Nothing to pick')
+        self.world_origin, self.world_direction, self.local_origin, self.local_direction = world_origin, world_direction, local_origin, local_direction
 
 class Viewport( QQuickFramebufferObject ):
 
@@ -34,6 +35,9 @@ class Viewport( QQuickFramebufferObject ):
 
         self.render_to_texture_attachment = -1
         self._backgroundColor = QColor(qRgba(1,1,1,1))
+
+        self._picked = None
+        self._clicked = None
 
         
         
@@ -95,6 +99,73 @@ class Viewport( QQuickFramebufferObject ):
         
     def pick(self, clicked_x, clicked_y, modifiers = None):
 
+        v, h, world_origin, world_direction = self.pick_helper(clicked_x, clicked_y)
+
+        if self._debug and modifiers is not None and (modifiers & Qt.ShiftModifier):
+            np_origin = utils.to_numpy(world_origin)
+            np_v = utils.to_numpy(v)
+            np_h = utils.to_numpy(h)
+
+            self._debug_actors.clearActors()
+            self._debug_actors.addActor(CustomActors.arrow(np_origin, np_origin + np_h, 0.01, QColor('red')))
+            self._debug_actors.addActor(CustomActors.arrow(np_origin, np_origin + np_v, 0.01, QColor('green')))
+            self._debug_actors.addActor(CustomActors.arrow(np_origin, np_origin + utils.to_numpy(world_direction) * 100, 0.01, QColor('magenta')))
+        
+
+        min_t = float("inf")
+        min_result = None
+        for actor in self.renderer.sorted_actors:
+            if actor._geometry:
+                if actor._geometry.indices is not None\
+                and actor._geometry.attribs.vertices is not None:
+
+                    bvh = actor._geometry.goc_bvh()
+                    if bvh is None:
+                        continue
+                    bvh.update()
+                    if bvh.bvh is None:
+                        continue
+                    
+                    
+                    local_origin, local_direction = self.to_local(world_origin, world_direction, actor)
+
+
+                    local_origin_np, local_direction_np = utils.to_numpy(local_origin), utils.to_numpy(local_direction)
+                    # try to intersect the actor's geometry!
+                    if bvh.primitiveType == BVH.PrimitiveType.TRIANGLES or bvh.primitiveType == BVH.PrimitiveType.LINES:
+
+                        ids, tuvs = bvh.bvh.intersect_ray(local_origin_np, local_direction_np, True)
+
+                        if ids.size > 0:
+                            actor_min_t = tuvs[:,0].min() 
+                            if actor_min_t < min_t:
+                                min_t = actor_min_t
+                                min_result = (actor, ids, tuvs, world_origin, world_direction, local_origin, local_direction)
+
+                    elif bvh.primitiveType == BVH.PrimitiveType.POINTS:
+
+                        object_id, distance, t = bvh.bvh.ray_distance(local_origin_np, local_direction_np)
+                        real_distance = math.sqrt(t**2 + distance**2)
+                        if real_distance < min_t:
+                            min_t = real_distance
+                            min_result = (actor, bvh.indices.ndarray[object_id, None], np.array([[t, distance, real_distance]]), world_origin, world_direction, local_origin, local_direction)                       
+                    
+        
+        if min_result is not None:
+            return min_result
+
+        raise NothingToPickException(world_origin, world_direction, local_origin, local_direction)
+
+    def to_local(self, world_origin, world_direction, actor):
+        # bring back the actor at the origin
+        m = actor.transform.worldTransform(True) if actor.transform else QMatrix4x4()
+        m_inv = m.inverted()[0]
+
+        # bring the ray in the actor's referential
+        local_origin, local_direction = m_inv.map(world_origin), m_inv.mapVector(world_direction)
+        return local_origin, local_direction
+
+    def pick_helper(self, clicked_x, clicked_y):
         # http://schabby.de/picking-opengl-ray-tracing/
         aspect_ratio = self.aspect_ratio()
 
@@ -129,66 +200,7 @@ class Viewport( QQuickFramebufferObject ):
 
         # the picking ray direction
         world_direction = (world_origin - cam_origin).normalized()
-
-        if self._debug and modifiers is not None and (modifiers & Qt.ShiftModifier):
-            np_origin = utils.to_numpy(world_origin)
-            np_v = utils.to_numpy(v)
-            np_h = utils.to_numpy(h)
-
-            self._debug_actors.clearActors()
-            self._debug_actors.addActor(CustomActors.arrow(np_origin, np_origin + np_h, 0.01, QColor('red')))
-            self._debug_actors.addActor(CustomActors.arrow(np_origin, np_origin + np_v, 0.01, QColor('green')))
-            self._debug_actors.addActor(CustomActors.arrow(np_origin, np_origin + utils.to_numpy(world_direction) * 100, 0.01, QColor('magenta')))
-        
-
-        min_t = float("inf")
-        min_result = None
-        for actor in self.renderer.sorted_actors:
-            if actor._geometry:
-                if actor._geometry.indices is not None\
-                and actor._geometry.attribs.vertices is not None:
-
-                    bvh = actor._geometry.goc_bvh()
-                    if bvh is None:
-                        continue
-                    bvh.update()
-                    if bvh.bvh is None:
-                        continue
-                    
-                    
-                    # bring back the actor at the origin
-                    m = actor.transform.worldTransform() if actor.transform else QMatrix4x4()
-                    m_inv = m.inverted()[0]
-
-                    # bring the ray in the actor's referential
-                    local_origin, local_direction = m_inv.map(world_origin), m_inv.mapVector(world_direction)
-
-
-                    local_origin_np, local_direction_np = utils.to_numpy(local_origin), utils.to_numpy(local_direction)
-                    # try to intersect the actor's geometry!
-                    if bvh.primitiveType == BVH.PrimitiveType.TRIANGLES or bvh.primitiveType == BVH.PrimitiveType.LINES:
-
-                        ids, tuvs = bvh.bvh.intersect_ray(local_origin_np, local_direction_np, True)
-
-                        if ids.size > 0:
-                            actor_min_t = tuvs[:,0].min() 
-                            if actor_min_t < min_t:
-                                min_t = actor_min_t
-                                min_result = (actor, ids, tuvs, world_origin, world_direction, local_origin, local_direction)
-
-                    elif bvh.primitiveType == BVH.PrimitiveType.POINTS:
-
-                        object_id, distance, t = bvh.bvh.ray_distance(local_origin_np, local_direction_np)
-                        real_distance = math.sqrt(t**2 + distance**2)
-                        if real_distance < min_t:
-                            min_t = real_distance
-                            min_result = (actor, bvh.indices.ndarray[object_id, None], np.array([[t, distance, real_distance]]), world_origin, world_direction, local_origin, local_direction)                       
-                    
-        
-        if min_result is not None:
-            return min_result
-
-        raise NothingToPickException()
+        return v,h,world_origin,world_direction
 
     def mouseDoubleClickEvent(self, event):
         btns = event.buttons()
@@ -208,7 +220,7 @@ class Viewport( QQuickFramebufferObject ):
             self.update()
 
     def signal_helper(self, signal, event, ids, tuvs, world_origin, world_direction, local_origin, local_direction):
-        if ids.size > 0:
+        if len(ids) > 0:
             signal.emit(ids[0], QVector3D(tuvs[0,0], tuvs[0,1], tuvs[0,2]), world_origin, world_direction, local_origin, local_direction, Product.convert_to_dict(event), self)
 
 
@@ -221,17 +233,57 @@ class Viewport( QQuickFramebufferObject ):
         self._start_up = self._camera.up
         self._start_center = self.camera.center
 
-        if event.buttons() & Qt.RightButton:
+        if event.buttons() & Qt.LeftButton:
             try:
                 actor, ids, tuvs, world_origin, world_direction, local_origin, local_direction = self.pick(event.localPos().x(), event.localPos().y())
-                self.signal_helper(actor.clicked, event, ids, tuvs, world_origin, world_direction, local_origin, local_direction)
-            except NothingToPickException:
-                pass
+                if actor.clickable:
+                    self.signal_helper(actor.click, event, ids, tuvs, world_origin, world_direction, local_origin, local_direction)
+                    self._clicked = actor
+            except NothingToPickException as e:
+                self._clicked = None
             except:
                 traceback.print_exc()
+        
                 
         event.setAccepted(True)
 
+    def mouseMoveEvent(self, event):
+        """
+        Called by the Qt libraries whenever the window receives a mouse
+        move/drag event.
+        """
+        btns = event.buttons()
+
+        x, y = event.localPos().x(), event.localPos().y()
+
+        x_0, y_0 = self._mouse_start
+
+        dx, dy = (x - x_0, y - y_0)
+
+        h_width = self.width()/2
+        h_height = self.height()/2
+
+        if btns & Qt.LeftButton:
+            if self._clicked:
+                _, _, world_origin, world_direction = self.pick_helper(event.pos().x(), event.pos().y())
+                local_origin, local_direction = self.to_local(world_origin, world_direction, self._clicked)
+                self._clicked.move.emit(world_origin, world_direction, Product.convert_to_dict(event), self)
+            else:
+                # we want half a screen movement rotates the camera 90deg:
+                self._camera.pan_tilt(self._start_eye, self._start_up, 90.0 * dx/h_width, 90.0 * dy/h_height)
+
+        elif btns & Qt.MidButton:
+            self._camera.translate(self._start_eye, self._start_center, -dx/h_width, dy/h_height)
+
+        elif btns & (Qt.RightButton):
+            self._camera.roll(self._start_eye, self._start_up, -90.0 * dy/h_width)
+
+        # re-draw at next timer tick
+        self.update()
+
+    def mouseReleaseEvent(self, event):
+        # nothing to be done here.
+        self._clicked = None
 
     def wheelEvent(self, event):
         """
@@ -254,61 +306,34 @@ class Viewport( QQuickFramebufferObject ):
         self.update()
 
 
-    def mouseReleaseEvent(self, event):
-        # nothing to be done here.
-        pass
 
     def hoverMoveEvent(self, event):
 
-        hovered = set(filter(lambda actor:actor.mouseOver, self.renderer.sorted_actors))
-        any_picked = False
         try:
             actor, ids, tuvs, world_origin, world_direction, local_origin, local_direction = self.pick(event.pos().x(), event.pos().y(), event.modifiers())
-            any_picked = True
-            if actor in hovered:
+            if actor == self._picked:
+
                 self.signal_helper(actor.hoverMove, event, ids, tuvs, world_origin, world_direction, local_origin, local_direction)
-                hovered.remove(actor)
             else:
+                
+                if self._picked is not None: #release the previous pick
+                    self._picked.hoverLeave.emit(world_origin, world_direction, local_origin, local_direction, Product.convert_to_dict(event), self)
+                    self._picked.mouseOver = False
+
+                self._picked = actor
                 self.signal_helper(actor.hoverEnter, event, ids, tuvs, world_origin, world_direction, local_origin, local_direction)
                 actor.mouseOver = True
 
-        except NothingToPickException:
+        except NothingToPickException as e:
+            if self._picked is not None:
+                self._picked.hoverLeave.emit(e.world_origin, e.world_direction, e.local_origin, e.local_direction, Product.convert_to_dict(event), self)
+                self._picked.mouseOver = False
+            self._picked = None
             pass
         except:
             traceback.print_exc()
 
-        for actor in hovered:
-            if any_picked:
-                self.signal_helper(actor.hoverLeave, event, ids, tuvs, world_origin, world_direction, local_origin, local_direction)
-            actor.mouseOver = False
 
-    def mouseMoveEvent(self, event):
-        """
-        Called by the Qt libraries whenever the window receives a mouse
-        move/drag event.
-        """
-        btns = event.buttons()
 
-        x, y = event.localPos().x(), event.localPos().y()
-
-        x_0, y_0 = self._mouse_start
-
-        dx, dy = (x - x_0, y - y_0)
-
-        h_width = self.width()/2
-        h_height = self.height()/2
-
-        if btns & Qt.LeftButton:
-            # we want half a screen movement rotates the camera 90deg:
-            self._camera.pan_tilt(self._start_eye, self._start_up, 90.0 * dx/h_width, 90.0 * dy/h_height)
-
-        elif btns & Qt.MidButton:
-            self._camera.translate(self._start_eye, self._start_center, -dx/h_width, dy/h_height)
-
-        elif btns & (Qt.RightButton):
-            self._camera.roll(self._start_eye, self._start_up, -90.0 * dy/h_width)
-
-        # re-draw at next timer tick
-        self.update()
 
 

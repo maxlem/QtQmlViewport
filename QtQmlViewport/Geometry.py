@@ -1,11 +1,11 @@
 from . import BVH as PybindBVH
 from . import PointsBVH as PybindPointsBVH
-from QtQmlViewport import Product
+from QtQmlViewport import Product, utils
 from QtQmlViewport.Array import Array
 
 from OpenGL import GL as gl
-from PyQt5.QtCore import QObject, Q_ENUMS
-
+from PyQt5.QtCore import QObject, Q_ENUMS, pyqtSlot as Slot
+from PyQt5.QtGui import QVector3D
 import numpy as np
 
 class Attribs( Product.Product ):
@@ -110,6 +110,25 @@ class Geometry( Product.Product ):
     Product.InputProperty(vars(), Array, 'indices')
 
     Product.InputProperty(vars(), Attribs, 'attribs')
+
+    @Slot(int, QVector3D, str, result = QVector3D)
+    def faceAttribtAt(self, id, tuv, attribute):
+        face = self.faceIndices(id)
+        va, vb, vc = getattr(self.attribs, attribute).ndarray[face]
+        p = tuv[1] * va + tuv[2] * (vb + 1 - tuv[1] - tuv[2]) * vc
+        return utils.from_numpy(p)
+
+    @Slot(int, result = list)
+    def faceIndices(self, id):
+        assert self.primitiveType == PrimitiveType.TRIANGLES
+        return self.indices.ndarray[id*3:id*3+3].tolist()
+
+    @Slot(int, result = QVector3D)
+    def faceNormal(self, id):
+        face = self.faceIndices(id)
+        va, vb, vc = self.attribs.vertices.ndarray[face]
+        p = np.cross(vb-va, vc-va)
+        return utils.from_numpy(p/np.linalg.norm(p))
 
     def goc_bvh(self, update = False):
 

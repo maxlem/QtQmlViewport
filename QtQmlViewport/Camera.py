@@ -14,8 +14,8 @@ class Camera(Product.Product):
         '''
         self._vfov = 45.0
         self._near = 0.1
-        self._far = 400
-        self._eye = QVector3D(10,0,0)
+        self._far = 4000
+        self._eye = QVector3D(0,-10,0)
         self._up = QVector3D(0,0,1)
         self._center = QVector3D(0,0,0)
         self._transform = Transforms.Transform()

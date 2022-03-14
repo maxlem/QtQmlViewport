@@ -12,5 +12,5 @@ Points            1.0 Actors/Points.qml
 Box               1.0 Actors/Box.qml
 Sensor            1.0 Actors/Sensor.qml
 XYZ               1.0 Actors/XYZ.qml
-GridXZ            1.0 Actors/GridXZ.qml
+Grid2D            1.0 Actors/Grid2D.qml
 
