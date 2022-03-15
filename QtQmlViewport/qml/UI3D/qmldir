@@ -13,4 +13,5 @@ Box               1.0 Actors/Box.qml
 Sensor            1.0 Actors/Sensor.qml
 XYZ               1.0 Actors/XYZ.qml
 Grid2D            1.0 Actors/Grid2D.qml
+Arrow2D           1.0 Actors/Arrow2D.qml
 

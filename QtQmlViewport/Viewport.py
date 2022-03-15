@@ -1,5 +1,5 @@
 from QtQmlViewport import InFboRenderer, utils, Product, CustomActors
-from QtQmlViewport.Actors import Actors
+from QtQmlViewport.Actors import Actors, Renderable
 from QtQmlViewport.Camera import Camera
 from QtQmlViewport.Geometry import Geometry, BVH
 
@@ -47,6 +47,8 @@ class Viewport( QQuickFramebufferObject ):
     Product.RWProperty(vars(), 'QVariant', 'backgroundColor')
 
     Product.RWProperty(vars(), Actors, 'actors')
+
+    Product.RWProperty(vars(), Renderable, 'clicked')
 
     def harvest_updates(self):
         self.update()
@@ -238,9 +240,15 @@ class Viewport( QQuickFramebufferObject ):
                 actor, ids, tuvs, world_origin, world_direction, local_origin, local_direction = self.pick(event.localPos().x(), event.localPos().y())
                 if actor.clickable:
                     self.signal_helper(actor.click, event, ids, tuvs, world_origin, world_direction, local_origin, local_direction)
-                    self._clicked = actor
+
+                    if self.clicked is not None:
+                        self.clicked.selected = False
+                    self.clicked = actor
+                    self.clicked.selected = True
             except NothingToPickException as e:
-                self._clicked = None
+                if self.clicked is not None:
+                    self.clicked.selected = False
+                    self.clicked = None
             except:
                 traceback.print_exc()
         
@@ -282,8 +290,8 @@ class Viewport( QQuickFramebufferObject ):
         self.update()
 
     def mouseReleaseEvent(self, event):
-        # nothing to be done here.
-        self._clicked = None
+        # self.clicked = None
+        pass
 
     def wheelEvent(self, event):
         """

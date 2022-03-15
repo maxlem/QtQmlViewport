@@ -42,8 +42,8 @@ class Transform( Product.Product ):
         return QQuaternion.fromAxisAndAngle(axis, math.degrees(angle_rad))
 
     @Slot(float, float, float, result = QQuaternion)
-    def qFromEuler(self, roll, pitch, yaw):
-        return QQuaternion.fromEulerAngles(math.degrees(roll), math.degrees(pitch), math.degrees(yaw))
+    def qFromEuler(self, roll_rad, pitch_rad, yaw_rad):
+        return QQuaternion.fromEulerAngles(math.degrees(roll_rad), math.degrees(pitch_rad), math.degrees(yaw_rad))
 
     @Slot(QQuaternion, QVector3D, result = QMatrix4x4)
     def mFromTQ(self, t = QVector3D(), q = QQuaternion()):

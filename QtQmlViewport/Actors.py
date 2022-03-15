@@ -18,6 +18,7 @@ class Actor( Renderable ):
 
     def __init__( self, parent = None, geometry = None, effect = None, transform = None, name = None, visible = True, bbox = None, type_id = -1, instance_id = -1):
         super(Actor, self).__init__( parent )
+        self._selected = False
         self._clickable = True
         self._mouseOver = False
         self._geometry = None
@@ -51,6 +52,8 @@ class Actor( Renderable ):
     Product.InputProperty(vars(), bool, 'clickable')
 
     Product.InputProperty(vars(), bool, 'mouseOver')
+
+    Product.InputProperty(vars(), bool, 'selected')
 
     Product.InputProperty(vars(), Geometry, 'geometry')
 
