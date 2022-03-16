@@ -1,9 +1,38 @@
 from QtQmlViewport import Product
 
-from PyQt5.QtCore import pyqtProperty as Property, pyqtSignal as Signal, pyqtSlot as Slot, Q_CLASSINFO
+from PyQt5.QtCore import QObject, pyqtProperty as Property, pyqtSignal as Signal, pyqtSlot as Slot, Q_CLASSINFO
 from PyQt5.QtGui import QMatrix4x4, QVector3D, QQuaternion
 
 import math
+
+
+__singletons = QObject()
+
+def get_Transforms(*args):
+    try:
+        return __singletons._Transforms
+    except AttributeError:
+        __singletons._Transforms = Transforms()
+        return __singletons._Transforms
+class Transforms(QObject):
+    def __init__(self, parent = None):
+        super().__init__(parent)
+
+
+    @Slot(QVector3D, float, result = QQuaternion)
+    def qFromAA(self, axis, angle_rad):
+        return QQuaternion.fromAxisAndAngle(axis, math.degrees(angle_rad))
+
+    @Slot(float, float, float, result = QQuaternion)
+    def qFromEuler(self, roll_rad, pitch_rad, yaw_rad):
+        return QQuaternion.fromEulerAngles(math.degrees(roll_rad), math.degrees(pitch_rad), math.degrees(yaw_rad))
+
+    @Slot(QQuaternion, QVector3D, result = QMatrix4x4)
+    def mFromTQ(self, t = QVector3D(), q = QQuaternion()):
+        m = QMatrix4x4()
+        m.rotate(q)
+        m.translate(t)
+        return m  
 
 class Transform( Product.Product ):
 
@@ -37,20 +66,7 @@ class Transform( Product.Product ):
         return self.localTransform if self.parentTransform is None \
                else self.parentTransform.worldTransform() * self.localTransform
 
-    @Slot(QVector3D, float, result = QQuaternion)
-    def qFromAA(self, axis, angle_rad):
-        return QQuaternion.fromAxisAndAngle(axis, math.degrees(angle_rad))
 
-    @Slot(float, float, float, result = QQuaternion)
-    def qFromEuler(self, roll_rad, pitch_rad, yaw_rad):
-        return QQuaternion.fromEulerAngles(math.degrees(roll_rad), math.degrees(pitch_rad), math.degrees(yaw_rad))
-
-    @Slot(QQuaternion, QVector3D, result = QMatrix4x4)
-    def mFromTQ(self, t = QVector3D(), q = QQuaternion()):
-        m = QMatrix4x4()
-        m.rotate(q)
-        m.translate(t)
-        return m
 
 class Translation( Transform ):
 

@@ -36,8 +36,8 @@ class Viewport( QQuickFramebufferObject ):
         self.render_to_texture_attachment = -1
         self._backgroundColor = QColor(qRgba(1,1,1,1))
 
-        self._picked = None
-        self._clicked = None
+        self._hovered = None
+        self._selected = None
 
         
         
@@ -48,16 +48,9 @@ class Viewport( QQuickFramebufferObject ):
 
     Product.RWProperty(vars(), Actors, 'actors')
 
-    Product.RWProperty(vars(), Renderable, 'clicked')
+    Product.RWProperty(vars(), Renderable, 'selected')
 
-    def harvest_updates(self):
-        self.update()
-        # TODO: to prevent clogging 1 CPU, we should do something like this
-        # if self.renderer is not None:
-        #     for actor in self.renderer.sorted_actors:
-        #         if actor.dirty:
-        #             self.update()
-        #             return
+
 
     def aspect_ratio(self):
         return self.width()/self.height()
@@ -79,26 +72,45 @@ class Viewport( QQuickFramebufferObject ):
         return p
 
 
-    def createRenderer( self ):
-        self.renderer = InFboRenderer.InFboRenderer()
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.harvest_updates)
-        self.timer.start(0) #will be called after each event loop
-        return self.renderer
 
-    def set_render_to_texture_attachment(self, attachment):
-        if "QSG_RENDER_LOOP" in os.environ:
-            if os.environ['QSG_RENDER_LOOP'] != "basic":
-                warnings.warn("Error: multithreaded rendering enabled, please set os.environ['QSG_RENDER_LOOP'] = 'basic' before any Qt call")
-        if self.render_to_texture_attachment != attachment:
-            self.render_to_texture_attachment = attachment
-            self.update()
 
-    def get_render_to_texture_array(self):
-        if self.renderer is not None:
-            return self.renderer.render_to_texture_array
-        return None
-        
+    def pick_helper(self, clicked_x, clicked_y):
+        # http://schabby.de/picking-opengl-ray-tracing/
+        aspect_ratio = self.aspect_ratio()
+
+        cam_origin = self._camera.eye
+        cam_direction = (self._camera.center - cam_origin).normalized()
+
+        # The coordinate system we chose has x pointing right, y pointing down, z pointing into the screen
+        # in screen coordinates, the vertical axis points down, this coincides with our 'y' axis.
+        v = -self._camera._up # our y axis points down
+
+        # in screen coordinates, the horizontal axis points right, this coincides with our x axis
+        h = QVector3D.crossProduct(cam_direction, self._camera._up).normalized() # cam_direction points into the screen
+
+        # in InFobRenderer::render(), we use Viewport::perspective_matrix(), where self._camera.fov is used 
+        # as QMatrix4x4::perspective()'s verticalAngle parameter, so near clipping plane's vertical scale is given by:
+        v_scale = math.tan( math.radians(self._camera.vfov) / 2 ) * self._camera.near
+        h_scale = v_scale * aspect_ratio
+
+        # translate mouse coordinates so that the origin lies in the center
+        # of the viewport (screen coordinates origin is top, left)
+        x = clicked_x - self.width() / 2
+        y = clicked_y - self.height() / 2
+
+        # scale mouse coordinates so that half the view port width and height
+        # becomes 1 (to be coherent with v_scale, which takes half of fov)
+        x /= (self.width() / 2)
+        y /= (self.height() / 2)
+
+        # the picking ray origin: corresponds to the intersection of picking ray with
+        # near plane (we don't want to pick actors behind the near plane)
+        world_origin = cam_origin + cam_direction * self._camera.near + h * h_scale * x + v * v_scale * y
+
+        # the picking ray direction
+        world_direction = (world_origin - cam_origin).normalized()
+        return v,h,world_origin,world_direction
+
     def pick(self, clicked_x, clicked_y, modifiers = None):
 
         v, h, world_origin, world_direction = self.pick_helper(clicked_x, clicked_y)
@@ -167,42 +179,7 @@ class Viewport( QQuickFramebufferObject ):
         local_origin, local_direction = m_inv.map(world_origin), m_inv.mapVector(world_direction)
         return local_origin, local_direction
 
-    def pick_helper(self, clicked_x, clicked_y):
-        # http://schabby.de/picking-opengl-ray-tracing/
-        aspect_ratio = self.aspect_ratio()
 
-        cam_origin = self._camera.eye
-        cam_direction = (self._camera.center - cam_origin).normalized()
-
-        # The coordinate system we chose has x pointing right, y pointing down, z pointing into the screen
-        # in screen coordinates, the vertical axis points down, this coincides with our 'y' axis.
-        v = -self._camera._up # our y axis points down
-
-        # in screen coordinates, the horizontal axis points right, this coincides with our x axis
-        h = QVector3D.crossProduct(cam_direction, self._camera._up).normalized() # cam_direction points into the screen
-
-        # in InFobRenderer::render(), we use Viewport::perspective_matrix(), where self._camera.fov is used 
-        # as QMatrix4x4::perspective()'s verticalAngle parameter, so near clipping plane's vertical scale is given by:
-        v_scale = math.tan( math.radians(self._camera.vfov) / 2 ) * self._camera.near
-        h_scale = v_scale * aspect_ratio
-
-        # translate mouse coordinates so that the origin lies in the center
-        # of the viewport (screen coordinates origin is top, left)
-        x = clicked_x - self.width() / 2
-        y = clicked_y - self.height() / 2
-
-        # scale mouse coordinates so that half the view port width and height
-        # becomes 1 (to be coherent with v_scale, which takes half of fov)
-        x /= (self.width() / 2)
-        y /= (self.height() / 2)
-
-        # the picking ray origin: corresponds to the intersection of picking ray with
-        # near plane (we don't want to pick actors behind the near plane)
-        world_origin = cam_origin + cam_direction * self._camera.near + h * h_scale * x + v * v_scale * y
-
-        # the picking ray direction
-        world_direction = (world_origin - cam_origin).normalized()
-        return v,h,world_origin,world_direction
 
     def mouseDoubleClickEvent(self, event):
         btns = event.buttons()
@@ -223,7 +200,7 @@ class Viewport( QQuickFramebufferObject ):
 
     def signal_helper(self, signal, event, ids, tuvs, world_origin, world_direction, local_origin, local_direction):
         if len(ids) > 0:
-            signal.emit(ids[0], QVector3D(tuvs[0,0], tuvs[0,1], tuvs[0,2]), world_origin, world_direction, local_origin, local_direction, Product.convert_to_dict(event), self)
+            signal.emit(ids[0], QVector3D(tuvs[0,0], tuvs[0,1], tuvs[0,2]), world_origin, world_direction, local_origin, local_direction, utils.QObject_to_dict(event), self)
 
 
     def mousePressEvent(self, event):
@@ -240,15 +217,11 @@ class Viewport( QQuickFramebufferObject ):
                 actor, ids, tuvs, world_origin, world_direction, local_origin, local_direction = self.pick(event.localPos().x(), event.localPos().y())
                 if actor.clickable:
                     self.signal_helper(actor.click, event, ids, tuvs, world_origin, world_direction, local_origin, local_direction)
-
-                    if self.clicked is not None:
-                        self.clicked.selected = False
                     self.clicked = actor
-                    self.clicked.selected = True
             except NothingToPickException as e:
                 if self.clicked is not None:
-                    self.clicked.selected = False
                     self.clicked = None
+
             except:
                 traceback.print_exc()
         
@@ -272,10 +245,9 @@ class Viewport( QQuickFramebufferObject ):
         h_height = self.height()/2
 
         if btns & Qt.LeftButton:
-            if self._clicked:
+            if self.clicked:
                 _, _, world_origin, world_direction = self.pick_helper(event.pos().x(), event.pos().y())
-                local_origin, local_direction = self.to_local(world_origin, world_direction, self._clicked)
-                self._clicked.move.emit(world_origin, world_direction, Product.convert_to_dict(event), self)
+                self.clicked.move.emit(world_origin, world_direction, utils.QObject_to_dict(event), self)
             else:
                 # we want half a screen movement rotates the camera 90deg:
                 self._camera.pan_tilt(self._start_eye, self._start_up, 90.0 * dx/h_width, 90.0 * dy/h_height)
@@ -290,8 +262,19 @@ class Viewport( QQuickFramebufferObject ):
         self.update()
 
     def mouseReleaseEvent(self, event):
-        # self.clicked = None
-        pass
+
+        if self.clicked is not None:
+            if self.clicked.selectable:
+                if self.selected is not None:
+                    self.selected.selected = False
+                
+                self.selected = self.clicked
+                self.selected.selected = True
+                
+            _, _, world_origin, world_direction = self.pick_helper(event.pos().x(), event.pos().y())
+            self.clicked.release.emit(world_origin, world_direction, utils.QObject_to_dict(event), self)    
+            self.clicked = None
+
 
     def wheelEvent(self, event):
         """
@@ -319,24 +302,24 @@ class Viewport( QQuickFramebufferObject ):
 
         try:
             actor, ids, tuvs, world_origin, world_direction, local_origin, local_direction = self.pick(event.pos().x(), event.pos().y(), event.modifiers())
-            if actor == self._picked:
+            if actor == self._hovered:
 
                 self.signal_helper(actor.hoverMove, event, ids, tuvs, world_origin, world_direction, local_origin, local_direction)
             else:
                 
-                if self._picked is not None: #release the previous pick
-                    self._picked.hoverLeave.emit(world_origin, world_direction, local_origin, local_direction, Product.convert_to_dict(event), self)
-                    self._picked.mouseOver = False
+                if self._hovered is not None: #release the previous pick
+                    self._hovered.hoverLeave.emit(world_origin, world_direction, local_origin, local_direction, utils.QObject_to_dict(event), self)
+                    self._hovered.mouseOver = False
 
-                self._picked = actor
+                self._hovered = actor
                 self.signal_helper(actor.hoverEnter, event, ids, tuvs, world_origin, world_direction, local_origin, local_direction)
                 actor.mouseOver = True
 
         except NothingToPickException as e:
-            if self._picked is not None:
-                self._picked.hoverLeave.emit(e.world_origin, e.world_direction, e.local_origin, e.local_direction, Product.convert_to_dict(event), self)
-                self._picked.mouseOver = False
-            self._picked = None
+            if self._hovered is not None:
+                self._hovered.hoverLeave.emit(e.world_origin, e.world_direction, e.local_origin, e.local_direction, utils.QObject_to_dict(event), self)
+                self._hovered.mouseOver = False
+            self._hovered = None
             pass
         except:
             traceback.print_exc()
@@ -345,3 +328,31 @@ class Viewport( QQuickFramebufferObject ):
 
 
 
+    def createRenderer( self ):
+        self.renderer = InFboRenderer.InFboRenderer()
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.harvest_updates)
+        self.timer.start(0) #will be called after each event loop
+        return self.renderer
+
+    def set_render_to_texture_attachment(self, attachment):
+        if "QSG_RENDER_LOOP" in os.environ:
+            if os.environ['QSG_RENDER_LOOP'] != "basic":
+                warnings.warn("Error: multithreaded rendering enabled, please set os.environ['QSG_RENDER_LOOP'] = 'basic' before any Qt call")
+        if self.render_to_texture_attachment != attachment:
+            self.render_to_texture_attachment = attachment
+            self.update()
+
+    def get_render_to_texture_array(self):
+        if self.renderer is not None:
+            return self.renderer.render_to_texture_array
+        return None
+    
+    def harvest_updates(self):
+        self.update()
+        # TODO: to prevent clogging 1 CPU, we should do something like this
+        # if self.renderer is not None:
+        #     for actor in self.renderer.sorted_actors:
+        #         if actor.dirty:
+        #             self.update()
+        #             return

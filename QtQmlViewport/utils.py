@@ -215,6 +215,21 @@ def qt_qml_opengl(multi_windows_script = '', qml_dirs = [], img_providers = []):
 
     exit(app.exec_())
 
+def QObject_to_dict(obj):
+    dir_ = dir(obj)
+    dict_ = {}
+    for key in dir_:
+        if not key.startswith('_') and key[0].islower():
+            attr = getattr(obj, key)
+            if callable(attr):
+                try:
+                    dict_[key] = attr()
+                except:
+                    pass
+            else:
+                dict_[key] = attr
+    return dict_
+
 def QImage_to_numpy(qimage):
     '''  
         Converts a QImage into an opencv MAT format

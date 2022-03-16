@@ -198,11 +198,11 @@ class InFboRenderer( QQuickFramebufferObject.Renderer ):
 
             if not actor.bo_actor: # actor was dirty or is new
                             
-                indices = actor.geometry.indices
-                attribs = actor.geometry.attribs.get_attributes()
-
-
                 try:
+                    indices = actor.geometry.indices
+                    attribs = actor.geometry.attribs.get_attributes()
+
+
                     bo_actor = {"attribs": {}
                     , "textures": {}
                     , "out_textures": {}

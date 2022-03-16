@@ -29,6 +29,8 @@ qmlRegisterType(Transforms.Transform, "Viewport", 1, 0, "Transform" )
 qmlRegisterType(Transforms.Translation, "Viewport", 1, 0, "Translation" )
 qmlRegisterType(Transforms.Rotation, "Viewport", 1, 0, "Rotation" )
 qmlRegisterType(Transforms.MatrixTransform, "Viewport", 1, 0, "MatrixTransform" )
+qmlRegisterSingletonType(Transforms.Transforms, "Viewport", 1, 0, "Transforms", Transforms.get_Transforms)
+
 #
 qmlRegisterType(Geometry.Geometry, "Viewport", 1, 0, "Geometry" )
 qmlRegisterType(Geometry.Attribs, "Viewport", 1, 0, "Attribs" )

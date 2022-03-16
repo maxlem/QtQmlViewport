@@ -331,20 +331,7 @@ def recurse_types(f, value):
     elif issubclass(type(value), Product):
             f(value)
 
-def convert_to_dict(obj):
-    dir_ = dir(obj)
-    dict_ = {}
-    for key in dir_:
-        if not key.startswith('_') and key[0].islower():
-            attr = getattr(obj, key)
-            if callable(attr):
-                try:
-                    dict_[key] = attr()
-                except:
-                    pass
-            else:
-                dict_[key] = attr
-    return dict_
+
 
 def assign_input(product, property_name, value, before_write_callback = None):
 

@@ -18,9 +18,10 @@ class Actor( Renderable ):
 
     def __init__( self, parent = None, geometry = None, effect = None, transform = None, name = None, visible = True, bbox = None, type_id = -1, instance_id = -1):
         super(Actor, self).__init__( parent )
-        self._selected = False
         self._clickable = True
         self._mouseOver = False
+        self._selectable = True
+        self._selected = False
         self._geometry = None
         self._effect  = None
         self._transform = None
@@ -42,6 +43,8 @@ class Actor( Renderable ):
                          , arguments = ['id', 'tuv', 'worldOrigin', 'worldDirection', 'localOrigin', 'localDirection', 'event', 'viewport'] )
     move = Signal('QVector3D', 'QVector3D', 'QVariant', 'QVariant'
                          , arguments = ['worldOrigin', 'worldDirection', 'event', 'viewport'] )
+    release = Signal('QVector3D', 'QVector3D', 'QVariant', 'QVariant'
+                         , arguments = ['worldOrigin', 'worldDirection', 'event', 'viewport'] )
     hoverMove = Signal(int, 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVariant', 'QVariant'
                          , arguments = ['id', 'tuv', 'worldOrigin', 'worldDirection', 'localOrigin', 'localDirection', 'event', 'viewport'] )
     hoverEnter = Signal(int, 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVariant', 'QVariant'
@@ -49,9 +52,11 @@ class Actor( Renderable ):
     hoverLeave = Signal('QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVariant', 'QVariant'
     , arguments = ['worldOrigin', 'worldDirection', 'localOrigin', 'localDirection', 'event', 'viewport'])
 
-    Product.InputProperty(vars(), bool, 'clickable')
+    Product.InputProperty(vars(), bool, 'clickable') # Receives click and move signal
 
     Product.InputProperty(vars(), bool, 'mouseOver')
+
+    Product.InputProperty(vars(), bool, 'selectable') # is registered by the viewport as "selected" on mouse release
 
     Product.InputProperty(vars(), bool, 'selected')
 

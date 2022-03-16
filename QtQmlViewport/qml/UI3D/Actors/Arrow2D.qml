@@ -13,8 +13,8 @@ import UI3D 1.0
 Actor
 {
     id: component
-    
-    property alias color: program_.color
+
+    property alias program: program_
     property real bodyLength : 5
     property real bodyWidth  : 1
     property real pointLength: 2
@@ -71,7 +71,7 @@ Actor
     transform: Rotation
     {
         parentTransform: timberActor_.transform
-        quaternion: qFromEuler(Math.PI/2,0,0)
+        quaternion: Transforms.qFromEuler(Math.PI/2,0,0)
     }
 
     effect: Effect

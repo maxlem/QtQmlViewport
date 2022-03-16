@@ -36,4 +36,4 @@ GLSLProgram
     vertexShader: MaterialGLSL.vertexShader
     geometryShader: MaterialGLSL.geometryShader
     fragmentShader: MaterialGLSL.fragmentShader
-    }
+}
