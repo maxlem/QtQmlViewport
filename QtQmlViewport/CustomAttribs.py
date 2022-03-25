@@ -5,11 +5,9 @@ from QtQmlViewport.Geometry import Attribs
 class AmplitudeAttribs(Attribs):
     def __init__( self, parent=None, vertices = None, normals = None, amplitude = None ):
         super(AmplitudeAttribs, self).__init__( parent, vertices, normals )
-        self._amplitude = None
-
         self.amplitude = amplitude
 
-    Product.InputProperty(vars(), Array, 'amplitude')
+    Product.InputProperty(vars(), Array, 'amplitude', None)
 
     def get_attributes(self):
         '''
@@ -22,11 +20,10 @@ class AmplitudeAttribs(Attribs):
 class ColorsAttribs(Attribs):
     def __init__( self, parent=None, vertices = None, normals = None, colors = None):
         super(ColorsAttribs, self).__init__( parent, vertices, normals )
-        self._colors = None
         
         self.colors = colors
 
-    Product.InputProperty(vars(), Array, 'colors')
+    Product.InputProperty(vars(), Array, 'colors', None)
 
     def get_attributes(self):
         '''
@@ -39,9 +36,8 @@ class ColorsAttribs(Attribs):
 class SegmentationLabelsAttribs(Attribs):
     def __init__( self, parent=None ):
         super(SegmentationLabelsAttribs, self).__init__( parent )
-        self._labels = None
 
-    Product.InputProperty(vars(), Array, 'labels')
+    Product.InputProperty(vars(), Array, 'labels', None)
 
     def get_attributes(self):
         '''
@@ -55,11 +51,10 @@ class SegmentationLabelsAttribs(Attribs):
 class TexcoordsAttribs(Attribs):
     def __init__( self, parent=None, vertices = None, normals = None, texcoords0 = None ):
         super(TexcoordsAttribs, self).__init__( parent, vertices, normals )
-        self._texcoords0 = None
 
         self.texcoords0 = texcoords0
 
-    Product.InputProperty(vars(), Array, 'texcoords0')
+    Product.InputProperty(vars(), Array, 'texcoords0', None)
 
     def get_attributes(self):
         '''

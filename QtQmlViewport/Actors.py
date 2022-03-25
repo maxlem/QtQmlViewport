@@ -18,14 +18,6 @@ class Actor( Renderable ):
 
     def __init__( self, parent = None, geometry = None, effect = None, transform = None, name = None, visible = True, bbox = None, type_id = -1, instance_id = -1):
         super(Actor, self).__init__( parent )
-        self._clickable = True
-        self._mouseOver = False
-        self._selectable = True
-        self._selected = False
-        self._geometry = None
-        self._effect  = None
-        self._transform = None
-        self._visible = visible
         self._renderRank = 0
         self.bbox = bbox
         self.type_id = type_id
@@ -48,27 +40,27 @@ class Actor( Renderable ):
     hoverMove = Signal(int, 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVariant', 'QVariant'
                          , arguments = ['id', 'tuv', 'worldOrigin', 'worldDirection', 'localOrigin', 'localDirection', 'event', 'viewport'] )
     hoverEnter = Signal(int, 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVariant', 'QVariant'
-                         , arguments = ['id', 'tuv', 'worldOrigin', 'worldDirection', 'localOrigin', 'localDirection', 'event', 'viewport'] )
-    hoverLeave = Signal('QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVariant', 'QVariant'
-    , arguments = ['worldOrigin', 'worldDirection', 'localOrigin', 'localDirection', 'event', 'viewport'])
+                         , arguments = ['id', 'tuv', 'worldOrigin', 'worldDirection', 'event', 'viewport'] )
+    hoverLeave = Signal('QVector3D', 'QVector3D', 'QVariant', 'QVariant'
+    , arguments = ['worldOrigin', 'worldDirection', 'event', 'viewport'])
 
-    Product.InputProperty(vars(), bool, 'clickable') # Receives click and move signal
+    Product.InputProperty(vars(), bool, 'clickable', True) # Receives click and move signal
 
-    Product.InputProperty(vars(), bool, 'mouseOver')
+    Product.InputProperty(vars(), bool, 'mouseOver', False)
 
-    Product.InputProperty(vars(), bool, 'selectable') # is registered by the viewport as "selected" on mouse release
+    Product.InputProperty(vars(), bool, 'selectable', False) # is registered by the viewport as "selected" on mouse release
 
-    Product.InputProperty(vars(), bool, 'selected')
+    Product.InputProperty(vars(), bool, 'selected', False)
 
-    Product.InputProperty(vars(), Geometry, 'geometry')
+    Product.InputProperty(vars(), Geometry, 'geometry', None)
 
-    Product.InputProperty(vars(), Transform, 'transform')
+    Product.InputProperty(vars(), Transform, 'transform', None)
 
-    Product.InputProperty(vars(), Effect, 'effect')
+    Product.InputProperty(vars(), Effect, 'effect', None)
 
-    Product.InputProperty(vars(), bool, 'visible')
+    Product.InputProperty(vars(), bool, 'visible', True)
 
-    Product.InputProperty(vars(), int, 'renderRank')
+    Product.InputProperty(vars(), int, 'renderRank', 0)
 
 
 
@@ -80,7 +72,6 @@ class Actors( Renderable ):
         super(Actors, self).__init__( parent )
         self.setObjectName(name)
         self._renderables = []
-        self._instantiator = None
         self._manually_added = []
         self.bbox = bbox
         self.scale = scale
@@ -100,26 +91,28 @@ class Actors( Renderable ):
     def renderables(self):
         return QQmlListProperty(Renderable, self, self._renderables)
 
-    Product.InputProperty(vars(), QObject, 'instantiator')
+    Product.InputProperty(vars(), QObject, 'instantiator', None)
 
-    @Slot(Renderable)
+    @Slot(Renderable, result = Renderable)
     def addActor(self, actor):
         self._manually_added.append(actor)
         actor.setParent(self)
         self.makeDirty()
         return actor
 
-    @Slot(Renderable)
+    @Slot()
     def removeActor(self, actor):
         if actor in self._manually_added:
             self._manually_added.remove(actor)
             actor.setParent(None)
+            actor.deleteLater()
             self.makeDirty()
 
-    @Slot(Renderable)
+    @Slot()
     def clearActors(self):
         for a in self._manually_added:
             a.setParent(None)
+            a.deleteLater()
         self._manually_added.clear()
         self.makeDirty()
 
@@ -215,8 +208,8 @@ class Actors( Renderable ):
             if recursive_check(ma):
                 return True
 
-        if self._instantiator:
-            for c in self._instantiator.children():
+        if self.instantiator:
+            for c in self.instantiator.children():
                 if recursive_check(ma):
                     return True
         
@@ -238,7 +231,7 @@ class Actors( Renderable ):
         for ma in self._manually_added:
             add_actor(ma)
 
-        if self._instantiator:
+        if self.instantiator:
             for c in self._instantiator.children():
                 add_actor(c)
         

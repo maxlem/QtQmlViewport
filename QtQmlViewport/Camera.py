@@ -12,56 +12,48 @@ class Camera(Product.Product):
         '''
         Constructor
         '''
-        self._vfov = 45.0
-        self._near = 0.1
-        self._far = 4000
-        self._eye = QVector3D(0,-10,0)
-        self._up = QVector3D(0,0,1)
-        self._center = QVector3D(0,0,0)
-        self._transform = Transforms.Transform()
-        self._transform.set_producer(self)
         self.perspective_override = None
 
 
-    Product.ConstProperty(vars(), Transforms.Transform, 'transform')
+    Product.ConstProperty(vars(), Transforms.Transform, 'transform', Transforms.Transform())
 
-    Product.InputProperty(vars(), float, 'vfov')
+    Product.InputProperty(vars(), float, 'vfov', 45.0)
 
-    Product.InputProperty(vars(), float, 'near')
+    Product.InputProperty(vars(), float, 'near', 0.1)
 
-    Product.InputProperty(vars(), float, 'far')
+    Product.InputProperty(vars(), float, 'far', 10000)
 
-    Product.InputProperty(vars(), QVector3D, 'eye')
+    Product.InputProperty(vars(), QVector3D, 'eye', QVector3D(0,-10,0))
 
-    Product.InputProperty(vars(), QVector3D, 'up')
+    Product.InputProperty(vars(), QVector3D, 'up', QVector3D(0,0,1))
 
-    Product.InputProperty(vars(), QVector3D, 'center')
+    Product.InputProperty(vars(), QVector3D, 'center', QVector3D(0,0,0))
 
     @Slot(float, float)
     def pan_tilt(self, _eye, _up, dx, dy):
-        _front = self._center - _eye
+        _front = self.center - _eye
         _right = QVector3D.crossProduct(_front, _up).normalized()
         q = QQuaternion.fromAxisAndAngle(_up, dx) * QQuaternion.fromAxisAndAngle(_right, dy)
-        self.eye = self._center - q.rotatedVector(_front)
+        self.eye = self.center - q.rotatedVector(_front)
         self.up = q.rotatedVector(_up)
 
     def roll(self, _eye, _up, delta):
-        self.up = QQuaternion.fromAxisAndAngle(self._center - _eye, delta).rotatedVector(_up)
+        self.up = QQuaternion.fromAxisAndAngle(self.center - _eye, delta).rotatedVector(_up)
 
     def translate(self, _eye, _center, dx, dy):
-        _left = QVector3D.crossProduct((_center - _eye), self._up).normalized()
-        d = _left * dx + self._up * dy
+        _left = QVector3D.crossProduct((_center - _eye), self.up).normalized()
+        d = _left * dx + self.up * dy
         d *= (_eye - _center).length()
         self.eye = _eye + d
         self.center = _center + d
 
     def view_matrix(self):
         mat_v = QMatrix4x4()
-        mat_v.lookAt(self._eye, self._center, self._up)
+        mat_v.lookAt(self.eye, self.center, self.up)
         return mat_v
 
     def _update(self):
-        self._transform.set_local_transform(self.view_matrix().inverted()[0])
+        self.transform = self.view_matrix().inverted()[0]
 
 
 

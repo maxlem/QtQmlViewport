@@ -38,24 +38,17 @@ class Transform( Product.Product ):
 
     def __init__( self, parent = None ):
         super(Transform, self).__init__( parent )
-        self._localTransform = QMatrix4x4()
-        self._parentTransform = None
 
     Q_CLASSINFO('DefaultProperty', 'parentTransform')
 
-    localTransformChanged = Signal()
-
-    def local_transform(self):
-        return self._localTransform
-
-    localTransform = Property(QMatrix4x4, local_transform, notify = localTransformChanged)
-
-    def set_local_transform(self, matrix4x4):
+    def before_write_local_transform(self, matrix4x4):
         if matrix4x4 is None:
             matrix4x4 = QMatrix4x4()
-        Product.assign_input(self, "localTransform", matrix4x4)
+        return matrix4x4
 
-    Product.InputProperty(vars(), Product.Product, 'parentTransform')
+    Product.InputProperty(vars(), Product.Product, 'localTransform', QMatrix4x4(), None, before_write_local_transform)
+
+    Product.InputProperty(vars(), Product.Product, 'parentTransform', None)
 
 
     @Slot(result = QMatrix4x4)
@@ -72,41 +65,37 @@ class Translation( Transform ):
 
     def __init__( self, parent = None ):
         super(Translation, self).__init__( parent )
-        self._translate = QVector3D()
 
 
     def translate_cb(self):
         m = QMatrix4x4()
         m.translate(self._translate)
-        self.set_local_transform(m)
+        self.localTransform = m
 
-    Product.InputProperty(vars(), QVector3D, 'translate', translate_cb)
+    Product.InputProperty(vars(), QVector3D, 'translate', QVector3D(), translate_cb)
 
 class Rotation( Transform ):
 
     def __init__( self, parent = None ):
         super(Rotation, self).__init__( parent )
-        self._quaternion = QQuaternion()
 
 
     def quaternion_cb(self):
         m = QMatrix4x4()
         m.rotate(self._quaternion)
-        self.set_local_transform(m)
+        self.localTransform = m
 
-    Product.InputProperty(vars(), QQuaternion, 'quaternion', quaternion_cb)
+    Product.InputProperty(vars(), QQuaternion, 'quaternion', QQuaternion(), quaternion_cb)
 
 class MatrixTransform( Transform ):
 
     def __init__( self, parent = None, matrix = QMatrix4x4() ):
         super(MatrixTransform, self).__init__( parent )
-        self._matrix = None
-
         self.matrix = matrix
 
     def matrix_cb(self):
-        self.set_local_transform(self._matrix)
+        self.localTransform = self.matrix
 
-    Product.InputProperty(vars(), QMatrix4x4, 'matrix', matrix_cb)
+    Product.InputProperty(vars(), QMatrix4x4, 'matrix', QMatrix4x4(), matrix_cb)
 
 

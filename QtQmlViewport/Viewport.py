@@ -12,9 +12,9 @@ import math, traceback, os, warnings
 
 
 class NothingToPickException(Exception):
-    def __init__(self, world_origin, world_direction, local_origin, local_direction):
+    def __init__(self, world_origin, world_direction):
         super().__init__('Nothing to pick')
-        self.world_origin, self.world_direction, self.local_origin, self.local_direction = world_origin, world_direction, local_origin, local_direction
+        self.world_origin, self.world_direction = world_origin, world_direction
 
 class Viewport( QQuickFramebufferObject ):
 
@@ -24,31 +24,28 @@ class Viewport( QQuickFramebufferObject ):
         self.setAcceptHoverEvents(True)
         self.renderer = None
 
-        self._camera = Camera()
         self._mouse_start = None
         self._start_eye = None
         self._start_up = None
 
-        self._actors = None
         self._debug_actors = Actors()
         self._debug = True
 
         self.render_to_texture_attachment = -1
-        self._backgroundColor = QColor(qRgba(1,1,1,1))
 
         self._hovered = None
-        self._selected = None
+        self._clicked = None
 
         
         
 
-    Product.ConstProperty(vars(), Camera, 'camera')
+    Product.RWProperty(vars(), Camera, 'camera', Camera())
 
-    Product.RWProperty(vars(), 'QVariant', 'backgroundColor')
+    Product.RWProperty(vars(), 'QVariant', 'backgroundColor', QColor(qRgba(1,1,1,1)))
 
-    Product.RWProperty(vars(), Actors, 'actors')
+    Product.RWProperty(vars(), Actors, 'actors', None)
 
-    Product.RWProperty(vars(), Renderable, 'selected')
+    Product.RWProperty(vars(), Renderable, 'selected', None)
 
 
 
@@ -168,7 +165,7 @@ class Viewport( QQuickFramebufferObject ):
         if min_result is not None:
             return min_result
 
-        raise NothingToPickException(world_origin, world_direction, local_origin, local_direction)
+        raise NothingToPickException(world_origin, world_direction)
 
     def to_local(self, world_origin, world_direction, actor):
         # bring back the actor at the origin
@@ -184,7 +181,7 @@ class Viewport( QQuickFramebufferObject ):
     def mouseDoubleClickEvent(self, event):
         btns = event.buttons()
         if btns & Qt.MidButton or (btns & Qt.LeftButton and event.modifiers() & Qt.ShiftModifier) :
-            # centers camera on clicked point
+            # centers camera on selected point
 
             try:
                 _, _, tuvs, world_origin, world_direction, _, _ = self.pick(event.localPos().x(), event.localPos().y())
@@ -217,10 +214,14 @@ class Viewport( QQuickFramebufferObject ):
                 actor, ids, tuvs, world_origin, world_direction, local_origin, local_direction = self.pick(event.localPos().x(), event.localPos().y())
                 if actor.clickable:
                     self.signal_helper(actor.click, event, ids, tuvs, world_origin, world_direction, local_origin, local_direction)
-                    self.clicked = actor
+                    self._clicked = actor
+                    if actor.selectable:
+                        self.selected = actor
+                        self.selected.selected = True
             except NothingToPickException as e:
-                if self.clicked is not None:
-                    self.clicked = None
+                if self.selected is not None:
+                    self.selected.selected = False
+                    self.selected = None
 
             except:
                 traceback.print_exc()
@@ -245,9 +246,9 @@ class Viewport( QQuickFramebufferObject ):
         h_height = self.height()/2
 
         if btns & Qt.LeftButton:
-            if self.clicked:
+            if self._clicked:
                 _, _, world_origin, world_direction = self.pick_helper(event.pos().x(), event.pos().y())
-                self.clicked.move.emit(world_origin, world_direction, utils.QObject_to_dict(event), self)
+                self._clicked.move.emit(world_origin, world_direction, utils.QObject_to_dict(event), self)
             else:
                 # we want half a screen movement rotates the camera 90deg:
                 self._camera.pan_tilt(self._start_eye, self._start_up, 90.0 * dx/h_width, 90.0 * dy/h_height)
@@ -263,17 +264,11 @@ class Viewport( QQuickFramebufferObject ):
 
     def mouseReleaseEvent(self, event):
 
-        if self.clicked is not None:
-            if self.clicked.selectable:
-                if self.selected is not None:
-                    self.selected.selected = False
-                
-                self.selected = self.clicked
-                self.selected.selected = True
+        if self._clicked is not None:
                 
             _, _, world_origin, world_direction = self.pick_helper(event.pos().x(), event.pos().y())
-            self.clicked.release.emit(world_origin, world_direction, utils.QObject_to_dict(event), self)    
-            self.clicked = None
+            self._clicked.release.emit(world_origin, world_direction, utils.QObject_to_dict(event), self)    
+            self._clicked = None
 
 
     def wheelEvent(self, event):
@@ -308,7 +303,7 @@ class Viewport( QQuickFramebufferObject ):
             else:
                 
                 if self._hovered is not None: #release the previous pick
-                    self._hovered.hoverLeave.emit(world_origin, world_direction, local_origin, local_direction, utils.QObject_to_dict(event), self)
+                    self._hovered.hoverLeave.emit(world_origin, world_direction, utils.QObject_to_dict(event), self)
                     self._hovered.mouseOver = False
 
                 self._hovered = actor
@@ -317,7 +312,7 @@ class Viewport( QQuickFramebufferObject ):
 
         except NothingToPickException as e:
             if self._hovered is not None:
-                self._hovered.hoverLeave.emit(e.world_origin, e.world_direction, e.local_origin, e.local_direction, utils.QObject_to_dict(event), self)
+                self._hovered.hoverLeave.emit(e.world_origin, e.world_direction, utils.QObject_to_dict(event), self)
                 self._hovered.mouseOver = False
             self._hovered = None
             pass

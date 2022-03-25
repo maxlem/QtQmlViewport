@@ -11,15 +11,12 @@ import numpy as np
 class Attribs( Product.Product ):
     def __init__( self, parent=None, vertices = None, normals = None ):
         super(Attribs, self).__init__( parent )
-        self._vertices = None
-        self._normals = None
-
         self.vertices = vertices
         self.normals = normals
 
 
-    Product.InputProperty(vars(), Array, 'vertices')
-    Product.InputProperty(vars(), Array, 'normals')
+    Product.InputProperty(vars(), Array, 'vertices', None)
+    Product.InputProperty(vars(), Array, 'normals', None)
 
     def get_attributes(self):
         '''
@@ -44,9 +41,6 @@ class BVH( Product.Product ):
 
     def __init__( self, parent=None, indices=None, points=None, primitive_type = PrimitiveType.TRIANGLES):
         super(BVH, self).__init__( parent )
-        self._indices = None
-        self._points = None
-        self._primitiveType = PrimitiveType.TRIANGLES
 
         self.indices = indices
         self.points = points
@@ -58,11 +52,11 @@ class BVH( Product.Product ):
 
     Q_ENUMS(PrimitiveType)
 
-    Product.InputProperty(vars(), int, 'primitiveType')
+    Product.InputProperty(vars(), int, 'primitiveType', PrimitiveType.TRIANGLES)
 
-    Product.InputProperty(vars(), Array, 'indices')
+    Product.InputProperty(vars(), Array, 'indices', None)
 
-    Product.InputProperty(vars(), Array, 'points')
+    Product.InputProperty(vars(), Array, 'points', None)
 
     def _update(self):
         if self._indices is None or self._points is None:
@@ -92,9 +86,6 @@ class Geometry( Product.Product ):
 
     def __init__( self, parent=None, indices = None, attribs = None, primitive_type = PrimitiveType.TRIANGLES ):
         super(Geometry, self).__init__( parent )
-        self._indices = None
-        self._attribs = None
-        self._primitiveType = PrimitiveType.TRIANGLES
         self.bvh = None
 
         self.indices = indices
@@ -105,11 +96,11 @@ class Geometry( Product.Product ):
 
     Q_ENUMS(PrimitiveType)
 
-    Product.InputProperty(vars(), int, 'primitiveType')
+    Product.InputProperty(vars(), int, 'primitiveType', PrimitiveType.TRIANGLES)
 
-    Product.InputProperty(vars(), Array, 'indices')
+    Product.InputProperty(vars(), Array, 'indices', None)
 
-    Product.InputProperty(vars(), Attribs, 'attribs')
+    Product.InputProperty(vars(), Attribs, 'attribs', None)
 
     @Slot(int, QVector3D, str, result = QVector3D)
     def faceAttribtAt(self, id, tuv, attribute):

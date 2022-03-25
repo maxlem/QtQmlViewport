@@ -170,7 +170,7 @@ class InFboRenderer( QQuickFramebufferObject.Renderer ):
             self.vertex_array = QOpenGLVertexArrayObject()
             self.vertex_array.create()
 
-        self.background_color = viewport._backgroundColor
+        self.background_color = viewport.backgroundColor
 
         self.sorted_actors = []
         self.bo_actors = []

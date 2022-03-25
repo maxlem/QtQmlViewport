@@ -5,14 +5,8 @@ from PyQt5.QtGui import QOpenGLShaderProgram, QOpenGLShader
 class GLSLProgram( Product.Product ):
     def __init__(self, parent = None, vertex_shader = None, geometry_shader = None, fragment_shader = None, uniforms = {}, textures = {}, outputTextures = {}):
         super(GLSLProgram, self).__init__(parent)
-        self._vertexShader = None
-        self._geometryShader = None
-        self._fragmentShader = None
-        self._uniforms = {}
-        self._textures = {}
-        self._outputTextures = {}
         self._linkDirty = False
-
+        self._program = None
 
         self.vertexShader = vertex_shader
         self.geometryShader = geometry_shader
@@ -34,39 +28,36 @@ class GLSLProgram( Product.Product ):
             self._program.link()
             self._linkDirty = False
 
-    Product.InputProperty(vars(), 'QVariant', 'uniforms')
+    Product.InputProperty(vars(), 'QVariant', 'uniforms', {})
 
     ''' supports dict of Array, subject to the constraints associated with Image.to_QImage() '''
-    Product.InputProperty(vars(), 'QVariant', 'textures')
+    Product.InputProperty(vars(), 'QVariant', 'textures', {})
 
-    Product.InputProperty(vars(), 'QVariant', 'outputTextures')
+    Product.InputProperty(vars(), 'QVariant', 'outputTextures', {})
 
 
     def relink(self):
         self._linkDirty = True
 
-    Product.InputProperty(vars(), str, 'geometryShader', relink)
+    Product.InputProperty(vars(), str, 'geometryShader', None, relink)
 
-    Product.InputProperty(vars(), str, 'vertexShader', relink)
+    Product.InputProperty(vars(), str, 'vertexShader', None, relink)
 
-    Product.InputProperty(vars(), str, 'fragmentShader', relink)
+    Product.InputProperty(vars(), str, 'fragmentShader', None, relink)
 
 
 class Effect( Product.Product ):
     def __init__(self, parent = None, shader0 = None, point_size = 1, line_width = 1, name = ""):
         super(Effect, self).__init__(parent)
-        self._shader0 = None
-        self._pointSize = 1
-        self._lineWidth = 1
         self.setObjectName(name)
 
         self.shader0 = shader0
         self.pointSize = point_size
         self.lineWidth = line_width
 
-    Product.InputProperty(vars(), GLSLProgram, 'shader0')
+    Product.InputProperty(vars(), GLSLProgram, 'shader0', None)
 
-    Product.InputProperty(vars(), int, 'pointSize')
+    Product.InputProperty(vars(), int, 'pointSize', 1)
 
-    Product.InputProperty(vars(), int, 'lineWidth')
+    Product.InputProperty(vars(), int, 'lineWidth', 1)
 

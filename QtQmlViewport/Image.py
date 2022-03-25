@@ -17,12 +17,10 @@ import traceback
 class ColorMapArray(Array.ArrayUByte4):
     def __init__(self, parent = None):
         super(ColorMapArray, self).__init__(parent)
-        self._colorMap = 'jet'
-        self._width = 256
         self._update()
 
-    Product.InputProperty(vars(), str, "colorMap")
-    Product.InputProperty(vars(), int, "width")
+    Product.InputProperty(vars(), str, "colorMap", "jet")
+    Product.InputProperty(vars(), int, "width", 256)
 
     def _update(self):
         norm = plt.Normalize(0, self._width)
@@ -32,9 +30,8 @@ class ColorMapArray(Array.ArrayUByte4):
 class ImageFilter(Array.Array):
     def __init__(self, parent = None):
         super(ImageFilter, self).__init__(parent)
-        self._imageArray = None
 
-    Product.InputProperty(vars(), Array.Array, "imageArray")
+    Product.InputProperty(vars(), Array.Array, "imageArray", None)
 
     def _update(self):
         raise RuntimeError('not implemented!')
@@ -56,28 +53,22 @@ class BGRToRGBFilter(ImageFilter):
 class ColorMapFliter(ImageFilter):
     def __init__(self, parent = None):
         super(ColorMapFliter, self).__init__(parent)
-        self._colorMap = 'jet'
-        self._min = None
-        self._max = None
-        self._adaptative = 0
-        self._log = False
-        self._interpolate = False
 
     def colorMap_cb(self):
         assert hasattr(cm, self._colorMap)
 
-    Product.InputProperty(vars(), str, 'colorMap', colorMap_cb)
+    Product.InputProperty(vars(), str, 'colorMap', colorMap_cb, "jet")
 
-    Product.InputProperty(vars(), float, 'min')
+    Product.InputProperty(vars(), float, 'min', 0)
 
-    Product.InputProperty(vars(), float, 'max')
+    Product.InputProperty(vars(), float, 'max', 1)
 
-    Product.InputProperty(vars(), bool, 'log')
+    Product.InputProperty(vars(), bool, 'log', False)
 
-    Product.InputProperty(vars(), float, 'adaptative')
+    Product.InputProperty(vars(), float, 'adaptative', 0)
 
     #Test, addition of interpolation for missing values
-    Product.InputProperty(vars(), bool, 'interpolate')
+    Product.InputProperty(vars(), bool, 'interpolate', False)
 
 
     def _update(self):

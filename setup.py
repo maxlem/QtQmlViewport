@@ -3,7 +3,6 @@ import re
 import sys
 import platform
 import subprocess
-import setuptools
 
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
@@ -72,7 +71,7 @@ from subprocess import CalledProcessError
 
 kwargs = dict(
     name='QtQmlViewport',
-    version='0.1.6',
+    version='0.2.0',
     author='Maxime Lemonnier',
     description='Python QtQml 3D viewer toolkit',
     long_description='',
@@ -80,15 +79,12 @@ kwargs = dict(
     cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False,
     url="https://github.com/maxlem/QtQmlViewport",
-    download_url="https://github.com/maxlem/QtQmlViewport/archive/refs/tags/0.1.0.tar.gz",
     packages=[
         'QtQmlViewport',
         'QtQmlViewport.qml',
         'QtQmlViewport.qml.backend_qtquick5'
     ],
-    dependency_links = [
-        # "https://pioneer:yK6RUkhUCNHg3e1yxGT4@svleddar-gitlab.leddartech.local/api/v4/projects/481/packages/pypi/simple"
-    ],
+    dependency_links = [],
     install_requires=install_reqs,
     include_package_data = True
 )

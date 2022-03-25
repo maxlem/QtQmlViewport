@@ -1,34 +1,16 @@
-from PyQt5.QtCore import pyqtSignal as Signal, pyqtProperty as Property, pyqtSlot as Slot, QObject, QTimer, QVariant
-from PyQt5.QtQuick import QQuickItem
-from PyQt5.QtQml import QJSValue
-
-import pprint
+from PyQt5.QtCore import pyqtSignal as Signal, pyqtProperty as Property, pyqtSlot as Slot, QObject, QTimer, QVariant, Q_CLASSINFO
+from PyQt5.QtQml import QJSValue, QQmlListProperty
 import traceback
-import types
 
 class Setter(object):
-    def __init__(self, name):
+    def __init__(self, classvars, name, init_value, callback = None, before_write_callback = None):
         self.property_name = name
+        self.init_value = init_value
         self.attr_name = f'_{name}'
         self.signal_name = f'{name}Changed'
 
-    def __call__(self, target, new_val):
-        new_val = cvt_if_js_value(new_val)
-        if getattr(target, self.attr_name) != new_val:
-            setattr(target, self.attr_name, new_val)
-            getattr(target, self.signal_name).emit()
+        
 
-class InputSetter(Setter):
-    '''
-        To be used with InputProperty.
-        If used, 'callback' may be
-        - a member function
-        - the name of a member function
-        - a non-member function
-        It will be called if (and only if) a new input is set.
-    '''
-    def __init__(self, classvars, name, callback = None, before_write_callback = None):
-        super(InputSetter, self).__init__(name)
         self.callback_name = None
         self.callback = None
         self.before_write_callback_name = None
@@ -57,31 +39,72 @@ class InputSetter(Setter):
                 else:
                     raise RuntimeError(f'{before_write_callback} is not a member function')
 
+    def apply_callback(self, target):
+        try:
+            if self.callback_name is not None: #member function
+                getattr(target, self.callback_name)() #preserves polymorphism
+            elif self.callback is not None:
+                self.callback() #standalone callback function
+        except:
+            print(traceback.format_exc())
+
+    def _set(self, target, new_val):  #virtual
+        new_val = cvt_if_js_value(new_val)
+        if getattr(target, self.attr_name) != new_val:
+            if self.before_write_callback is not None:
+                value = self.before_write_callback(value)
+            setattr(target, self.attr_name, new_val)
+            getattr(target, self.signal_name).emit()
+            self.apply_callback(target)
 
     def __call__(self, target, new_val):
-        if assign_input(target, self.property_name, new_val, self.before_write_callback):
-            try:
+        if not hasattr(target, self.attr_name):
+            setattr(target, self.attr_name, self.init_value)
+        self._set(target, new_val)
 
-                if self.callback_name is not None: #member function
-                    getattr(target, self.callback_name)() #preserves polymorphism
-                elif self.callback is not None:
-                    self.callback() #standalone callback function
-            except:
-                print(traceback.format_exc())
+
+class InputSetter(Setter):
+    '''
+        To be used with InputProperty.
+        If used, 'callback' may be
+        - a member function
+        - the name of a member function
+        - a non-member function
+        It will be called if (and only if) a new input is set.
+    '''
+    def __init__(self, classvars, name, init_value, callback = None, before_write_callback = None):
+        super().__init__(classvars, name, init_value, callback, before_write_callback)
+        
+    def _set(self, target, new_val):
+        if assign_input(target, self.property_name, new_val, self.before_write_callback):
+            self.apply_callback(target)
+
+
 
 class Getter(object):
-    def __init__(self, name):
-        self.name = f'_{name}'
+    def __init__(self, name, init_value, set_producer):
+        self.attr_name = f'_{name}'
+        self.init_value = init_value
+        self.set_producer = set_producer
+
+    
+    def _get(self, target): #virtual
+        return getattr(target, self.attr_name)
 
     def __call__(self, target):
-        return getattr(target, self.name)
+        if not hasattr(target, self.attr_name):
+            setattr(target, self.attr_name, self.init_value)
+            if self.set_producer and issubclass(type(target), Product):
+                self.init_value.set_producer(target)
+
+        return self._get(target)
 
 class QVariantGetter(Getter):
-    def __init__(self, name):
-        super(QVariantGetter, self).__init__(name)
+    def __init__(self, name, init_value, set_producer):
+        super().__init__(name, init_value, set_producer)
 
     def __call__(self, target):
-        return QVariant(super(QVariantGetter, self).__call__(target))
+        return QVariant(super().__call__(target))
 
 class ConstGetter(object):
     def __init__(self, value):
@@ -90,15 +113,14 @@ class ConstGetter(object):
     def __call__(self, _):
         return self.value
 
-def select_getter(typename, name):
+def select_getter(typename, name, init_value, set_producer = False):
     if typename == QVariant:
-        return QVariantGetter(name)
-    return Getter(name)
+        return QVariantGetter(name, init_value, set_producer)
+    return Getter(name, init_value, set_producer)
 
-def goc_member_variable(classvars, name):
-    if f'_{name}' not in classvars:
-        classvars[f'_{name}'] = None
-def RWProperty(classvars, typename, name):
+
+
+def RWProperty(classvars, typename, name, init_value, callback = None, before_write_callback = None):
     '''
         This function adds a QProperty named 'name' to a class's vars() dictionary.
         It create the getter, setter, and signal named 'nameChanged'.
@@ -107,11 +129,10 @@ def RWProperty(classvars, typename, name):
 
         A QProperty is exposed to QML.
     '''
-    goc_member_variable(classvars, name)
     notify = classvars[f'{name}Changed'] = Signal()
-    classvars[f'{name}'] = Property(typename, select_getter(typename, name), Setter(name), notify = notify)
+    classvars[f'{name}'] = Property(typename, select_getter(typename, name, init_value), Setter(classvars, name, init_value, callback, before_write_callback), notify = notify)
 
-def ROProperty(classvars, typename, name):
+def ROProperty(classvars, typename, name, init_value):
     '''
         This function adds a QProperty named 'name' to a class's vars() dictionary.
         It creates the getter, and signal named 'nameChanged'. It also creates
@@ -121,12 +142,11 @@ def ROProperty(classvars, typename, name):
 
         A QProperty is exposed to QML.
     '''
-    goc_member_variable(classvars, name)
     notify = classvars[f'{name}Changed'] = Signal()
-    classvars[f'{name}'] = Property(typename, select_getter(typename, name), notify = notify)
-    classvars[f'set_{name}'] = Setter(name)
+    classvars[f'{name}'] = Property(typename, select_getter(typename, name, init_value), notify = notify)
+    classvars[f'set_{name}'] = Setter(classvars, name, init_value)
 
-def ConstProperty(classvars, typename, name):
+def ConstProperty(classvars, typename, name, init_value):
     '''
         This function adds a QProperty named 'name' to a class's vars() dictionary.
         It create the getter.
@@ -135,12 +155,12 @@ def ConstProperty(classvars, typename, name):
 
         A QProperty is exposed to QML.
     '''
-    goc_member_variable(classvars, name)
-    classvars[f'{name}'] = Property(typename, select_getter(typename, name), constant = True)
+    
+    classvars[f'{name}'] = Property(typename, select_getter(typename, name, init_value, issubclass(type(init_value), Product)), constant = True)
 
 
 
-def InputProperty(classvars, typename, name, callback = None, before_write_callback = None):
+def InputProperty(classvars, typename, name, init_value, callback = None, before_write_callback = None):
     '''
         This function adds a QProperty named 'name' to a class's vars() dictionary.
         It create the getter, setter, and signal named 'nameChanged'.
@@ -156,9 +176,8 @@ def InputProperty(classvars, typename, name, callback = None, before_write_callb
 
         'before_write_callback(value) -> value' will be called before assignment (an assignment operation will occurs only if new value is different from old value)
     '''
-    goc_member_variable(classvars, name)
     notify = classvars[f'{name}Changed'] = Signal()
-    classvars[f'{name}'] = Property(typename, select_getter(typename, name), InputSetter(classvars, name, callback, before_write_callback), notify = notify)
+    classvars[f'{name}'] = Property(typename, select_getter(typename, name, init_value), InputSetter(classvars, name, init_value, callback, before_write_callback), notify = notify)
 
 
 def Q_ENUMS_mock(classvars, enumclass): #do not use, PySide2 workaround
@@ -178,31 +197,41 @@ class Product(QObject):
     productClean = Signal()
 
     def __init__(self, parent=None):
-        super(Product, self).__init__(parent)
+        super().__init__(parent)
         '''
         Constructor
         '''
         self._dirty = False
-        self._dependsOn = []
+        self._autoUpdate = False
         self._dependencies = []
         self._error = None
         self._producer = None
-        self._autoUpdate = False
+        self._children = []
+
+    Q_CLASSINFO('DefaultProperty', 'children')
+
+
+    @Property(QQmlListProperty)
+    def children(self):
+        return QQmlListProperty(QObject, self, self._children)
 
     @Property(QObject, notify = productClean)
     def bind(self):
         return self
+    
+    InputProperty(vars(), bool, 'autoUpdate', False)
+    InputProperty(vars(), list, 'dependsOn', [])
 
     def set_dirty(self, d):
         if self._dirty != d:
             self._dirty = d
             self.dirtyChanged.emit()
-        if self._dirty and self._autoUpdate:
+        if self._dirty and self.autoUpdate:
             QTimer.singleShot(0, self.update) # schedule an update as soon as we go back to event loop, but not before
-    dirtyChanged = Signal()
-    dirty = Property(bool, Getter('dirty'), set_dirty, dirtyChanged)
 
-    RWProperty(vars(), bool, 'autoUpdate')
+    dirtyChanged = Signal()
+    dirty = Property(bool, Getter('dirty', False, False), set_dirty, dirtyChanged)
+
 
     def _update(self):
         '''
@@ -244,20 +273,6 @@ class Product(QObject):
             self.dirty = False
             self.productClean.emit()
 
-    def set_dependsOn(self, v):
-        '''
-            *Important" this property is meant to be used only from QML.
-            Use add/remove_dependency() from python.
-        '''
-        old = self._dependsOn
-        if assign_input(self, "dependsOn", v):
-            for d in old:
-                self.remove_dependency(d)
-            for d in self._dependsOn:
-                self.add_dependency(d)
-
-    dependsOnChanged = Signal()
-    dependsOn = Property(list, Getter('dependsOn'), set_dependsOn, dependsOnChanged)
 
     def add_dependency(self, d):
         if d is not None:
@@ -275,7 +290,8 @@ class Product(QObject):
     def set_producer(self, producer):
         if self._producer is not None:
             raise RuntimeError("Error: tried to call set a set_producer() twice on " + str(self) + ".")
-        assert(issubclass(type(producer), Product))
+        if not issubclass(type(producer), Product):
+            raise RuntimeError("Error: tried to call set a set_producer() with type " + type(producer) + ".")
         self._producer = producer
         self.add_dependency(producer)
         producer.productClean.connect(self.makeClean)
@@ -283,12 +299,10 @@ class Product(QObject):
 
 class VariantProduct(Product):
     def __init__(self, parent=None, variant=None):
-        super(VariantProduct, self).__init__(parent)
-        self._variant = None
-
+        super().__init__(parent)
         self.variant = variant #calls the setter
 
-    InputProperty(vars(), 'QVariant', 'variant')
+    InputProperty(vars(), 'QVariant', 'variant', None)
 
     @Slot(str, result = QVariant)
     def dictField(self, name):
@@ -344,7 +358,10 @@ def assign_input(product, property_name, value, before_write_callback = None):
 
     variable_name = f"_{property_name}"
     assert(issubclass(type(product), Product))
-    current = getattr(product, variable_name)
+    try:
+        current = getattr(product, variable_name)
+    except:
+        pass
     try:
         rv = compare(current, value)
     except:

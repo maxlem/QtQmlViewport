@@ -11,7 +11,6 @@ class Array( Product.Product ):
 
     def __init__(self, parent = None, ndarray = None):
         super(Array, self).__init__(parent)
-        self._input = None
         self.ndarray = None
         self._timestamp = 0
         self.productClean.connect(self.arrayChanged)
@@ -41,7 +40,7 @@ class Array( Product.Product ):
             assert a.shape[i] == self.ndarray.shape[i]
         self.ndarray = a
 
-    Product.InputProperty(vars(), 'QVariant', 'input', input_cb)
+    Product.InputProperty(vars(), 'QVariant', 'input', None, input_cb)
 
     @Slot(result = 'QVariant')
     def values(self):
