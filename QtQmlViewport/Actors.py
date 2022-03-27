@@ -4,7 +4,7 @@ from QtQmlViewport.Geometry import Geometry
 from QtQmlViewport.Transforms import Transform
 from QtQmlViewport.utils import to_numpy, tf_to_numpy
 
-from PyQt5.QtGui import QVector3D
+from PyQt5.QtGui import QMatrix4x4
 from PyQt5.QtCore import pyqtProperty as Property, pyqtSignal as Signal, pyqtSlot as Slot, QObject, Q_CLASSINFO
 from PyQt5.QtQml import QQmlListProperty
 
@@ -92,6 +92,7 @@ class Actors( Renderable ):
         return QQmlListProperty(Renderable, self, self._renderables)
 
     Product.InputProperty(vars(), QObject, 'instantiator', None)
+    Product.InputProperty(vars(), Transform, 'transform', None)
 
     @Slot(Renderable, result = Renderable)
     def addActor(self, actor):
@@ -126,7 +127,7 @@ class Actors( Renderable ):
             id_to_actors = self.get_visible_actors()
 
         actor_to_id_ = {}
-        for i, a in enumerate(id_to_actors):
+        for i, (a, _) in enumerate(id_to_actors):
             n = a.objectName()
             if not n:
                 n = "anonymous"
@@ -150,14 +151,15 @@ class Actors( Renderable ):
 
         
         id_to_actors = self.get_visible_actors()
-        for i, a in enumerate(id_to_actors):
+        for i, (a, parentTransform) in enumerate(id_to_actors):
             a.geometry.update()
             if a.transform:
                 a.transform.update()
             bvh = a.geometry.goc_bvh(True)
             bvhs.append(bvh if bvh is None else bvh.bvh)
-
-            matrices.append(tf_to_numpy(a.transform) if a.transform else np.eye(4, dtype = 'f4'))
+            p = tf_to_numpy(a.transform) if parentTransform else np.eye(4, dtype = 'f4')
+            m = tf_to_numpy(a.transform) if a.transform else np.eye(4, dtype = 'f4')
+            matrices.append(np.matmul(p, m))
 
             uniforms = {}
             for k,v, in a.effect.shader0.uniforms.items():
@@ -187,8 +189,6 @@ class Actors( Renderable ):
 
     def is_any_visible_actor_dirty(self):
 
-        is_dirty = False
-
         def recursive_check(a):
             if issubclass(type(a), Actor):
                 if a.visible:
@@ -215,15 +215,17 @@ class Actors( Renderable ):
         
         return False
 
-    def get_visible_actors(self):
-        actors = set()
+    def get_visible_actors(self, parentTransform = QMatrix4x4()):
+        actors = []
+
+        tf = parentTransform * (self.transform.worldTransform(True) if self.transform else QMatrix4x4())
 
         def add_actor(a):
             if issubclass(type(a), Actor):
                 if a.visible:
-                    actors.add(a)
+                    actors.append((a, tf))
             elif issubclass(type(a), Actors):
-                actors.update(a.get_visible_actors()) #union of sets
+                actors.extend(a.get_visible_actors(tf)) #union of sets
 
         for r in self._renderables:
             add_actor(r)

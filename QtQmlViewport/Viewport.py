@@ -41,7 +41,7 @@ class Viewport( QQuickFramebufferObject ):
 
     Product.RWProperty(vars(), Camera, 'camera', Camera())
 
-    Product.RWProperty(vars(), 'QVariant', 'backgroundColor', QColor(qRgba(1,1,1,1)))
+    Product.RWProperty(vars(), QColor, 'backgroundColor', QColor(qRgba(1,1,1,1)))
 
     Product.RWProperty(vars(), Actors, 'actors', None)
 

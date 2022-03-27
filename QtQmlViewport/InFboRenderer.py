@@ -179,10 +179,10 @@ class InFboRenderer( QQuickFramebufferObject.Renderer ):
         if viewport.actors is None :
             return
 
-        sorted_actors = sorted(list(viewport.actors.get_visible_actors()), key=attrgetter('renderRank'))
+        sorted_actors = sorted(list(viewport.actors.get_visible_actors()), key=lambda a_tf:a_tf[0].renderRank)
         sorted_actors.extend(viewport._debug_actors.get_visible_actors())
 
-        for actor in sorted_actors:
+        for actor, parent_tf in sorted_actors:
             if not actor.update() :
                 if not hasattr(actor, "__error_reported___") or not actor.__error_reported___:
                     LoggingManager.instance().warning("Not rendering actor " + str(actor) + ". It is has error " + str(actor._error )+ ".")
@@ -202,7 +202,6 @@ class InFboRenderer( QQuickFramebufferObject.Renderer ):
                     indices = actor.geometry.indices
                     attribs = actor.geometry.attribs.get_attributes()
 
-
                     bo_actor = {"attribs": {}
                     , "textures": {}
                     , "out_textures": {}
@@ -211,7 +210,7 @@ class InFboRenderer( QQuickFramebufferObject.Renderer ):
                     , "program": actor.effect.shader0._program
                     , "point_size": actor.effect.pointSize
                     , "line_width": actor.effect.lineWidth
-                    , "transform" : actor.transform.worldTransform() if actor.transform else QMatrix4x4()
+                    , "transform" : parent_tf * (actor.transform.worldTransform() if actor.transform else QMatrix4x4())
                     , "primitiveType": actor.geometry.primitiveType
                     , "actor_not_thread_safe": actor}
                 except Exception as e:

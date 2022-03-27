@@ -46,10 +46,16 @@ class Transform( Product.Product ):
             matrix4x4 = QMatrix4x4()
         return matrix4x4
 
-    Product.InputProperty(vars(), Product.Product, 'localTransform', QMatrix4x4(), None, before_write_local_transform)
+    Product.InputProperty(vars(), QMatrix4x4, 'localTransform', QMatrix4x4(), None, before_write_local_transform)
 
     Product.InputProperty(vars(), Product.Product, 'parentTransform', None)
 
+    @Slot(result = QMatrix4x4)
+    def earliestParent(self, update = False):
+        tf = self.parentTransform
+        while tf is not None:
+            tf = tf.parentTransform
+        return tf
 
     @Slot(result = QMatrix4x4)
     def worldTransform(self, update = False):
