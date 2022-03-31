@@ -71,7 +71,7 @@ from subprocess import CalledProcessError
 
 kwargs = dict(
     name='QtQmlViewport',
-    version='0.2.1',
+    version='0.2.2',
     author='Maxime Lemonnier',
     description='Python QtQml 3D viewer toolkit',
     long_description='',

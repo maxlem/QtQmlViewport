@@ -191,18 +191,19 @@ class InFboRenderer( QQuickFramebufferObject.Renderer ):
                 continue
 
             if not hasattr(actor, 'bo_actor'):
-                actor.bo_actor = {}
-                actor.productDirty.connect(lambda actor=actor: setattr(actor, "bo_actor", {}))
+                actor.bo_actor = {"dirty":True}
+                actor.productDirty.connect(lambda a=actor: a.bo_actor.update({"dirty": True}))
             
             
 
-            if not actor.bo_actor: # actor was dirty or is new
+            if actor.bo_actor["dirty"]: # actor was dirty or is new
                             
                 try:
                     indices = actor.geometry.indices
                     attribs = actor.geometry.attribs.get_attributes()
 
-                    bo_actor = {"attribs": {}
+                    bo_actor = {"dirty": False
+                    , "attribs": {}
                     , "textures": {}
                     , "out_textures": {}
                     , "uniforms": copy.deepcopy(actor.effect.shader0.uniforms)

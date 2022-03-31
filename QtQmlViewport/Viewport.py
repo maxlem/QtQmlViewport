@@ -169,7 +169,10 @@ class Viewport( QQuickFramebufferObject ):
 
     def to_local(self, world_origin, world_direction, actor):
         # bring back the actor at the origin
-        m = actor.transform.worldTransform(True) if actor.transform else QMatrix4x4()
+        if not "transform" in actor.bo_actor:
+            actor.update()
+            print(actor.dirty)
+        m = actor.bo_actor["transform"]
         m_inv = m.inverted()[0]
 
         # bring the ray in the actor's referential

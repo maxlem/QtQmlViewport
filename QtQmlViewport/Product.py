@@ -125,7 +125,8 @@ def RWProperty(classvars, typename, name, init_value, callback = None, before_wr
         This function adds a QProperty named 'name' to a class's vars() dictionary.
         It create the getter, setter, and signal named 'nameChanged'.
 
-        *Important* a member variable named '_name' will be expected by the getter and setter.
+        *Important* if not already present, a member variable named '_name' 
+        will be added to the instance by the first call to the getter or setter.
 
         A QProperty is exposed to QML.
     '''
@@ -138,7 +139,8 @@ def ROProperty(classvars, typename, name, init_value):
         It creates the getter, and signal named 'nameChanged'. It also creates
         a set_name() setter outside of the Qt property system.
 
-        *Important* a member variable named '_name' will be expected by the getter.
+        *Important* if not already present, a member variable named '_name' 
+        will be added to the instance by the first call to the getter.
 
         A QProperty is exposed to QML.
     '''
@@ -151,7 +153,8 @@ def ConstProperty(classvars, typename, name, init_value):
         This function adds a QProperty named 'name' to a class's vars() dictionary.
         It create the getter.
 
-        *Important* a member variable named '_name' will be expected by the getter.
+        *Important* if not already present, a member variable named '_name' 
+        will be added to the instance by the first call to the getter.
 
         A QProperty is exposed to QML.
     '''
@@ -165,7 +168,8 @@ def InputProperty(classvars, typename, name, init_value, callback = None, before
         This function adds a QProperty named 'name' to a class's vars() dictionary.
         It create the getter, setter, and signal named 'nameChanged'.
 
-        *Important* a member variable named '_name' will be expected by the getter and setter.
+        *Important* if not already present, a member variable named '_name' 
+        will be added to the instance by the first call to the getter or setter.
 
         'callback()->None' will be called if
         (and only if) a new value is set. see InputSetter for more information on 'callback'
