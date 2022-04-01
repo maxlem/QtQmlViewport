@@ -5,12 +5,12 @@ from PyQt5.QtGui import QVector3D
 
 import numpy as np
 
-class Array( Product.Product ):
+class ArrayBase( Product.Product ):
 
     arrayChanged = Signal()
 
     def __init__(self, parent = None, ndarray = None):
-        super(Array, self).__init__(parent)
+        super(ArrayBase, self).__init__(parent)
         self.ndarray = None
         self._timestamp = 0
         self.productClean.connect(self.arrayChanged)
@@ -50,12 +50,12 @@ class Array( Product.Product ):
     def recurse_value(a, indices):
         if len(indices) == 1:
             return a[int(indices[0])]
-        return Array.recurse_value(a[int(indices[0])], indices[1:])
+        return ArrayBase.recurse_value(a[int(indices[0])], indices[1:])
 
     @Slot(list, result = float)
     def value(self, indices):
         assert len(indices) == len(self.ndarray.shape)
-        return float(self.ndarray.dtype.type(Array.recurse_value(self.ndarray, indices)))
+        return float(self.ndarray.dtype.type(ArrayBase.recurse_value(self.ndarray, indices)))
 
     @Property(int, notify = arrayChanged)
     def size(self):
@@ -74,66 +74,66 @@ class Array( Product.Product ):
         s[0] = new_size
         self.ndarray.resize(tuple(s), refcheck = False)
 
-class ArrayFloat1(Array):
+class ArrayFloat1(ArrayBase):
     def __init__(self, parent = None):
         super(ArrayFloat1, self).__init__(parent)
         self.ndarray = np.empty((0, 1), dtype = np.float32)
-class ArrayFloat2(Array):
+class ArrayFloat2(ArrayBase):
     def __init__(self, parent = None):
         super(ArrayFloat2, self).__init__(parent)
         self.ndarray = np.empty((0, 2), dtype = np.float32)
-class ArrayFloat3(Array):
+class ArrayFloat3(ArrayBase):
     def __init__(self, parent = None):
         super(ArrayFloat3, self).__init__(parent)
         self.ndarray = np.empty((0, 3), dtype = np.float32)
-class ArrayFloat4(Array):
+class ArrayFloat4(ArrayBase):
     def __init__(self, parent = None):
         super(ArrayFloat4, self).__init__(parent)
         self.ndarray = np.empty((0, 4), dtype = np.float32)
 
-class ArrayDouble1(Array):
+class ArrayDouble1(ArrayBase):
     def __init__(self, parent = None):
         super(ArrayDouble1, self).__init__(parent)
         self.ndarray = np.empty((0, 1), dtype = np.float64)
-class ArrayDouble2(Array):
+class ArrayDouble2(ArrayBase):
     def __init__(self, parent = None):
         super(ArrayDouble2, self).__init__(parent)
         self.ndarray = np.empty((0, 2), dtype = np.float64)
-class ArrayDouble3(Array):
+class ArrayDouble3(ArrayBase):
     def __init__(self, parent = None):
         super(ArrayDouble3, self).__init__(parent)
         self.ndarray = np.empty((0, 3), dtype = np.float64)
-class ArrayDouble4(Array):
+class ArrayDouble4(ArrayBase):
     def __init__(self, parent = None):
         super(ArrayDouble4, self).__init__(parent)
         self.ndarray = np.empty((0, 4), dtype = np.float64)
-class ArrayUInt1(Array):
+class ArrayUInt1(ArrayBase):
     def __init__(self, parent = None):
         super(ArrayUInt1, self).__init__(parent)
         self.ndarray = np.empty((0,), dtype = np.uint32)
 
-class ArrayInt1(Array):
+class ArrayInt1(ArrayBase):
     def __init__(self, parent = None):
         super(ArrayInt1, self).__init__(parent)
         self.ndarray = np.empty((0,), dtype = np.int32)
 
-class ArrayShort512(Array):
+class ArrayShort512(ArrayBase):
     def __init__(self, parent = None):
         super(ArrayShort512, self).__init__(parent)
         self.ndarray = np.empty((0,512), dtype = np.int16)
 
-class ArrayUShort1(Array):
+class ArrayUShort1(ArrayBase):
     def __init__(self, parent = None):
         super(ArrayUShort1, self).__init__(parent)
         self.ndarray = np.empty((0,), dtype = np.uint16)
 
 
-class ArrayUByte3(Array):
+class ArrayUByte3(ArrayBase):
     def __init__(self, parent = None):
         super(ArrayUByte3, self).__init__(parent)
         self.ndarray = np.empty((0,3), dtype = np.uint8)
 
-class ArrayUByte4(Array):
+class ArrayUByte4(ArrayBase):
     def __init__(self, parent = None):
         super(ArrayUByte4, self).__init__(parent)
         self.ndarray = np.empty((0,4), dtype = np.uint8)

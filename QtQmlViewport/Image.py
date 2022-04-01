@@ -27,11 +27,11 @@ class ColorMapArray(Array.ArrayUByte4):
         colormap = getattr(cm, self._colorMap)(norm(np.arange(self._width)))
         self.ndarray = np.ascontiguousarray(colormap * 255, dtype=np.uint8)
 
-class ImageFilter(Array.Array):
+class ImageFilter(Array.ArrayBase):
     def __init__(self, parent = None):
         super(ImageFilter, self).__init__(parent)
 
-    Product.InputProperty(vars(), Array.Array, "imageArray", None)
+    Product.InputProperty(vars(), Array.ArrayBase, "imageArray", None)
 
     def _update(self):
         raise RuntimeError('not implemented!')
@@ -122,7 +122,7 @@ class QImagePainter(QQuickPaintedItem):
 
 
     imageArrayChanged = Signal()
-    @Property(Array.Array, notify = imageArrayChanged)
+    @Property(Array.ArrayBase, notify = imageArrayChanged)
     def imageArray(self):
         return self._imageArray
 

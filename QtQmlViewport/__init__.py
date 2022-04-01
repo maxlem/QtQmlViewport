@@ -37,7 +37,7 @@ qmlRegisterType(Geometry.Attribs, "Viewport", 1, 0, "Attribs" )
 qmlRegisterType(CustomAttribs.AmplitudeAttribs, "Viewport", 1, 0, "AmplitudeAttribs" )
 qmlRegisterType(CustomAttribs.ColorsAttribs, "Viewport", 1, 0, "ColorsAttribs" )
 #
-qmlRegisterType(Array.Array, "Viewport", 1, 0, "Array")
+qmlRegisterType(Array.ArrayBase, "Viewport", 1, 0, "ArrayBase")
 qmlRegisterType(Array.ArrayFloat1, "Viewport", 1, 0, "ArrayFloat1" )
 qmlRegisterType(Array.ArrayFloat2, "Viewport", 1, 0, "ArrayFloat2" )
 qmlRegisterType(Array.ArrayFloat3, "Viewport", 1, 0, "ArrayFloat3" )

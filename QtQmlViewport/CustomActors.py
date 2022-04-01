@@ -40,8 +40,8 @@ def colored_point_cloud(points, colors, matrix = np.eye(4, dtype = 'f4'), name =
     return Actors.Actor(
         geometry = Geometry.Geometry(
             attribs = CustomAttribs.ColorsAttribs( 
-                vertices = Array.Array(ndarray = points)
-                , colors = Array.Array(ndarray = colors))
+                vertices = Array.ArrayBase(ndarray = points)
+                , colors = Array.ArrayBase(ndarray = colors))
             , primitive_type = Geometry.PrimitiveType.POINTS
         ), effect = CustomEffects.point_colors()
         , transform = ensure_Transform(matrix)
@@ -63,16 +63,16 @@ def colored_quad_cloud(points, amplitude ,indices, colormap = "viridis", log_sca
     cm_array = np.ascontiguousarray(colormap_ * 255, dtype=np.uint8)
 
     if color is None:
-        effect = CustomEffects.color_map(Array.Array(ndarray = cm_array), amplitude.min(), amplitude.max())
+        effect = CustomEffects.color_map(Array.ArrayBase(ndarray = cm_array), amplitude.min(), amplitude.max())
     else:
         effect = CustomEffects.material(color=color)
     
     return Actors.Actor(
         geometry = Geometry.Geometry(
-            indices = Array.Array(ndarray = indices)
+            indices = Array.ArrayBase(ndarray = indices)
             ,attribs = CustomAttribs.ColorsAttribs( 
-                vertices = Array.Array(ndarray = points)
-                , colors = Array.Array(ndarray = amplitude))
+                vertices = Array.ArrayBase(ndarray = points)
+                , colors = Array.ArrayBase(ndarray = amplitude))
             , primitive_type = Geometry.PrimitiveType.TRIANGLES
         ), effect = effect
         , transform = ensure_Transform(matrix)
@@ -101,10 +101,10 @@ def colormap_point_cloud(points, amplitude, min_amplitude = None, max_amplitude 
     return Actors.Actor(
         geometry = Geometry.Geometry(
             attribs = CustomAttribs.AmplitudeAttribs( 
-                vertices = Array.Array(ndarray = points)
-                , amplitude = Array.Array(ndarray = amplitude))
+                vertices = Array.ArrayBase(ndarray = points)
+                , amplitude = Array.ArrayBase(ndarray = amplitude))
             , primitive_type = Geometry.PrimitiveType.POINTS
-        ), effect = CustomEffects.color_map(Array.Array(ndarray = cm_array), min_amplitude, max_amplitude)
+        ), effect = CustomEffects.color_map(Array.ArrayBase(ndarray = cm_array), min_amplitude, max_amplitude)
         , transform = ensure_Transform(matrix)
         , name = name
     )
@@ -113,9 +113,9 @@ def lines(indices, vertices, color = QColor("blue"), matrix = np.eye(4, dtype = 
     color = ensure_QColor(color)
     return Actors.Actor(
         geometry = Geometry.Geometry(
-            indices = Array.Array(ndarray = indices)
+            indices = Array.ArrayBase(ndarray = indices)
             , attribs = Geometry.Attribs( 
-                vertices = Array.Array(ndarray = vertices))
+                vertices = Array.ArrayBase(ndarray = vertices))
             , primitive_type = Geometry.PrimitiveType.LINES
         ), effect = CustomEffects.emissive(color)
         , transform = ensure_Transform(matrix)
@@ -216,10 +216,10 @@ def from_mesh(mesh, color = QColor("blue"), effect_f = CustomEffects.material, s
     color = ensure_QColor(color)
     return Actors.Actor(
         geometry = Geometry.Geometry(
-            indices = Array.Array(ndarray = mesh.faces.flatten().astype('u4'))
+            indices = Array.ArrayBase(ndarray = mesh.faces.flatten().astype('u4'))
             , attribs = Geometry.Attribs(
-                vertices = Array.Array(ndarray = mesh.vertices.astype('f4') * scale)
-                , normals = Array.Array(ndarray = mesh.vertex_normals.astype('f4')))
+                vertices = Array.ArrayBase(ndarray = mesh.vertices.astype('f4') * scale)
+                , normals = Array.ArrayBase(ndarray = mesh.vertex_normals.astype('f4')))
             , primitive_type = Geometry.PrimitiveType.TRIANGLES
         ), effect = effect_f(color = color)
         , transform = ensure_Transform(matrix)
@@ -293,11 +293,11 @@ def quad(top_left = [0,0,0], bottom_left = [0,1,0], bottom_right = [1,1,0], top_
 
     return Actors.Actor(
         geometry = Geometry.Geometry(
-            indices = Array.Array(ndarray = np.array(indices, 'u4'))
+            indices = Array.ArrayBase(ndarray = np.array(indices, 'u4'))
             , attribs = CustomAttribs.TexcoordsAttribs( 
-                vertices = Array.Array(ndarray = np.array(vertices, 'f4'))
-                , normals = Array.Array(ndarray = np.array(normals, 'f4'))
-                , texcoords0 = Array.Array(ndarray = np.array(texcoords, 'f4'))
+                vertices = Array.ArrayBase(ndarray = np.array(vertices, 'f4'))
+                , normals = Array.ArrayBase(ndarray = np.array(normals, 'f4'))
+                , texcoords0 = Array.ArrayBase(ndarray = np.array(texcoords, 'f4'))
               ), primitive_type = Geometry.PrimitiveType.TRIANGLES if filled else Geometry.PrimitiveType.LINES
         ), effect = effect
         , transform = ensure_Transform(matrix)
@@ -431,10 +431,10 @@ def box(min = [0,0,0], max = [1,1,1], filled = False, color = QColor("blue"), ef
     
     return Actors.Actor(
         geometry = Geometry.Geometry(
-            indices = Array.Array(ndarray = np.array(indices, 'u4'))
+            indices = Array.ArrayBase(ndarray = np.array(indices, 'u4'))
             , attribs = Geometry.Attribs( 
-                vertices = Array.Array(ndarray = np.array(vertices, 'f4'))
-                , normals = Array.Array(ndarray = np.array(normals, 'f4'))
+                vertices = Array.ArrayBase(ndarray = np.array(vertices, 'f4'))
+                , normals = Array.ArrayBase(ndarray = np.array(normals, 'f4'))
               ), primitive_type = Geometry.PrimitiveType.TRIANGLES if filled else Geometry.PrimitiveType.LINES
         ), effect = effect_f(color) if filled else CustomEffects.emissive(color)
         , transform = ensure_Transform(matrix)
@@ -460,10 +460,10 @@ def axes(size = 1, matrix = np.eye(4, dtype = 'f4'), line_width = 1, name = "axe
                ]
     return Actors.Actor(
         geometry = Geometry.Geometry(
-            indices = Array.Array(ndarray = np.array(indices, 'u4'))
+            indices = Array.ArrayBase(ndarray = np.array(indices, 'u4'))
             , attribs = CustomAttribs.ColorsAttribs( 
-                vertices = Array.Array(ndarray = np.array(vertices, 'f4'))
-                , colors = Array.Array(ndarray = np.array(colors, 'f4'))
+                vertices = Array.ArrayBase(ndarray = np.array(vertices, 'f4'))
+                , colors = Array.ArrayBase(ndarray = np.array(colors, 'f4'))
               )
             , primitive_type = Geometry.PrimitiveType.LINES
         ), effect = CustomEffects.point_colors(line_width = line_width)
@@ -504,9 +504,9 @@ def text(text, font = "Arial", font_size = 6, line_width = 1, color = QColor("bl
 
     return Actors.Actor(
         geometry = Geometry.Geometry(
-            indices = Array.Array(ndarray = np.array(indices, 'u4'))
+            indices = Array.ArrayBase(ndarray = np.array(indices, 'u4'))
             , attribs = Geometry.Attribs( 
-                vertices = Array.Array(ndarray = np.array(vertices, 'f4'))
+                vertices = Array.ArrayBase(ndarray = np.array(vertices, 'f4'))
               )
             , primitive_type = Geometry.PrimitiveType.LINE_LOOP
         ), effect = CustomEffects.emissive(color, line_width = line_width, is_billboard = is_billboard)
@@ -532,9 +532,9 @@ def bbox(c = [0,0,0],d = [0,0,0],r=[0,0,0], color = QColor("blue"), effect_f = C
     
     actor = Actors.Actor(
         geometry = Geometry.Geometry(
-            indices = Array.Array(ndarray = np.array(indices, 'u4'))
+            indices = Array.ArrayBase(ndarray = np.array(indices, 'u4'))
             , attribs = Geometry.Attribs( 
-                vertices = Array.Array(ndarray = vertices)
+                vertices = Array.ArrayBase(ndarray = vertices)
               ), primitive_type = Geometry.PrimitiveType.LINES
         ), effect = CustomEffects.emissive(color)
         , transform = ensure_Transform(matrix)
@@ -589,7 +589,7 @@ def load_collada(filename, scale = 1, matrix = np.eye(4, dtype = 'f4'), name = "
                     if texture_image.id in textures_cache:
                         textures[effect_name] = textures_cache[texture_image.id]
                     else:
-                        array = textures[effect_name] = textures_cache[texture_image.id] = Array.Array(ndarray = utils.load_texture(texture_image.pilimage))
+                        array = textures[effect_name] = textures_cache[texture_image.id] = Array.ArrayBase(ndarray = utils.load_texture(texture_image.pilimage))
                 elif isinstance(value, tuple):
                     uniforms[effect_name] = QColor.fromRgbF(*value)
                     effect_signature.append((effect_name, value))
@@ -644,14 +644,14 @@ def load_collada(filename, scale = 1, matrix = np.eye(4, dtype = 'f4'), name = "
                 
                 attributes_ndarrays['texcoords0'] = uv
                 
-                attribs = CustomAttribs.TexcoordsAttribs(vertices = Array.Array(ndarray = attributes_ndarrays['vertices'] )
-                , normals = Array.Array(ndarray = attributes_ndarrays['normals'] )
-                , texcoords0 = Array.Array(ndarray = attributes_ndarrays['texcoords0']))
+                attribs = CustomAttribs.TexcoordsAttribs(vertices = Array.ArrayBase(ndarray = attributes_ndarrays['vertices'] )
+                , normals = Array.ArrayBase(ndarray = attributes_ndarrays['normals'] )
+                , texcoords0 = Array.ArrayBase(ndarray = attributes_ndarrays['texcoords0']))
                 #FIXME: bind collada uniforms if present
                 effect = CustomEffects.textured_material(textures)
             else:
-                attribs = Geometry.Attribs(vertices = Array.Array(ndarray = attributes_ndarrays['vertices'] )
-                , normals = Array.Array(ndarray = attributes_ndarrays['normals']))
+                attribs = Geometry.Attribs(vertices = Array.ArrayBase(ndarray = attributes_ndarrays['vertices'] )
+                , normals = Array.ArrayBase(ndarray = attributes_ndarrays['normals']))
                 #FIXME: bind other uniforms if present
                 effect = CustomEffects.material(color = uniforms['diffuse'], back_color = uniforms['diffuse'])
 
@@ -672,7 +672,7 @@ def load_collada(filename, scale = 1, matrix = np.eye(4, dtype = 'f4'), name = "
                 actor.geometry.indices.set_ndarray(np.hstack((actor.geometry.indices.ndarray, indices + n_vertices_before)))
 
             else:
-                geometry = Geometry.Geometry(indices = Array.Array(ndarray = indices), attribs = attribs)
+                geometry = Geometry.Geometry(indices = Array.ArrayBase(ndarray = indices), attribs = attribs)
 
                 actor = actors.addActor(Actors.Actor(geometry = geometry
                 , effect = effect

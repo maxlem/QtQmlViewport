@@ -1,5 +1,5 @@
 from QtQmlViewport import Product
-from QtQmlViewport.Array import Array
+from QtQmlViewport.Array import ArrayBase
 from QtQmlViewport.Geometry import Attribs
 
 class AmplitudeAttribs(Attribs):
@@ -7,7 +7,7 @@ class AmplitudeAttribs(Attribs):
         super(AmplitudeAttribs, self).__init__( parent, vertices, normals )
         self.amplitude = amplitude
 
-    Product.InputProperty(vars(), Array, 'amplitude', None)
+    Product.InputProperty(vars(), ArrayBase, 'amplitude', None)
 
     def get_attributes(self):
         '''
@@ -23,7 +23,7 @@ class ColorsAttribs(Attribs):
         
         self.colors = colors
 
-    Product.InputProperty(vars(), Array, 'colors', None)
+    Product.InputProperty(vars(), ArrayBase, 'colors', None)
 
     def get_attributes(self):
         '''
@@ -37,7 +37,7 @@ class SegmentationLabelsAttribs(Attribs):
     def __init__( self, parent=None ):
         super(SegmentationLabelsAttribs, self).__init__( parent )
 
-    Product.InputProperty(vars(), Array, 'labels', None)
+    Product.InputProperty(vars(), ArrayBase, 'labels', None)
 
     def get_attributes(self):
         '''
@@ -54,7 +54,7 @@ class TexcoordsAttribs(Attribs):
 
         self.texcoords0 = texcoords0
 
-    Product.InputProperty(vars(), Array, 'texcoords0', None)
+    Product.InputProperty(vars(), ArrayBase, 'texcoords0', None)
 
     def get_attributes(self):
         '''

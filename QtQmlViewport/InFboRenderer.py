@@ -34,7 +34,7 @@ class InFboRenderer( QQuickFramebufferObject.Renderer ):
         
         self.render_to_texture_attachment = -1
         self.render_to_texture_array = None
-        self.locked_render_to_texture_array = Array.Array(ndarray = np.empty((0,0,4), np.uint8))
+        self.locked_render_to_texture_array = Array.ArrayBase(ndarray = np.empty((0,0,4), np.uint8))
 
         self.draw_buffers = [GL.GL_COLOR_ATTACHMENT0, GL.GL_COLOR_ATTACHMENT1, GL.GL_COLOR_ATTACHMENT2, GL.GL_COLOR_ATTACHMENT3, GL.GL_COLOR_ATTACHMENT4]
         
@@ -296,7 +296,7 @@ class InFboRenderer( QQuickFramebufferObject.Renderer ):
 
             old = self.render_to_texture_array
             self.render_to_texture_array = self.locked_render_to_texture_array
-            self.locked_render_to_texture_array = old if old is not None else Array.Array(ndarray = np.empty((0,0,4), np.uint8))
+            self.locked_render_to_texture_array = old if old is not None else Array.ArrayBase(ndarray = np.empty((0,0,4), np.uint8))
 
             if self.render_to_texture_attachment != viewport.render_to_texture_attachment:
                 self.del_render_to_texture_attachment()

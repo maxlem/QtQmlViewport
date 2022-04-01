@@ -1,7 +1,7 @@
 from . import BVH as PybindBVH
 from . import PointsBVH as PybindPointsBVH
 from QtQmlViewport import Product, utils
-from QtQmlViewport.Array import Array
+from QtQmlViewport.Array import ArrayBase
 
 from OpenGL import GL as gl
 from PyQt5.QtCore import QObject, Q_ENUMS, pyqtSlot as Slot
@@ -15,8 +15,8 @@ class Attribs( Product.Product ):
         self.normals = normals
 
 
-    Product.InputProperty(vars(), Array, 'vertices', None)
-    Product.InputProperty(vars(), Array, 'normals', None)
+    Product.InputProperty(vars(), ArrayBase, 'vertices', None)
+    Product.InputProperty(vars(), ArrayBase, 'normals', None)
 
     def get_attributes(self):
         '''
@@ -54,9 +54,9 @@ class BVH( Product.Product ):
 
     Product.InputProperty(vars(), int, 'primitiveType', PrimitiveType.TRIANGLES)
 
-    Product.InputProperty(vars(), Array, 'indices', None)
+    Product.InputProperty(vars(), ArrayBase, 'indices', None)
 
-    Product.InputProperty(vars(), Array, 'points', None)
+    Product.InputProperty(vars(), ArrayBase, 'points', None)
 
     def _update(self):
         if self._indices is None or self._points is None:
@@ -75,7 +75,7 @@ class BVH( Product.Product ):
             self.bvh = PybindPointsBVH(self._shape_indices, self._points.ndarray.astype('f4'))
         elif self._primitiveType == PrimitiveType.LINES:
             
-            indices = Array(ndarray = np.array([0,1,2, 1,2,3, 0,4,2, 2,4,6, 1,5,3, 3,5,7, 4,5,6, 5,6,7, 2,3,6, 3,6,7], 'u4'))
+            indices = ArrayBase(ndarray = np.array([0,1,2, 1,2,3, 0,4,2, 2,4,6, 1,5,3, 3,5,7, 4,5,6, 5,6,7, 2,3,6, 3,6,7], 'u4'))
             self._shape_indices = indices.ndarray.reshape(indices.ndarray.shape[0]//3, 3, order = 'C')
             self.bvh = PybindBVH(self._shape_indices, self._points.ndarray.astype('f4'))
         else:
@@ -98,7 +98,7 @@ class Geometry( Product.Product ):
 
     Product.InputProperty(vars(), int, 'primitiveType', PrimitiveType.TRIANGLES)
 
-    Product.InputProperty(vars(), Array, 'indices', None)
+    Product.InputProperty(vars(), ArrayBase, 'indices', None)
 
     Product.InputProperty(vars(), Attribs, 'attribs', None)
 
