@@ -319,10 +319,16 @@ def skew(x):
 
 def mat_from_vectors(v1,v2):
     axis = np.cross(v1, v2)
+    axis_norm = np.linalg.norm(axis)
+    if axis_norm < 1e-7:
+        axis = np.roll(v1, 1)
+        axis_norm = np.linalg.norm(axis)
 
-    angle = np.dot(v1, v2)/(np.linalg.norm(v2))
+    angle = np.arccos(np.dot(v1, v2)/(np.linalg.norm(v2)))
 
-    return transforms3d.axangles.axangle2mat(axis=axis, angle=angle)
+
+
+    return transforms3d.axangles.axangle2mat(axis=axis/axis_norm, angle=angle, is_normalized=True)
     
 
 def unpack_floats(ndarray_4_uint8):

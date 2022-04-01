@@ -230,7 +230,7 @@ def cylinder(start = [0,0,0], end = [0,0,1], radius = 1, num_segments = 42, colo
     start = utils.to_numpy(start)
     end = utils.to_numpy(end)
     direction = end - start
-    cyl = trimesh.primitives.Cylinder(radius, np.linalg.norm(direction), to_trimesh_transform(start, direction), num_segments)
+    cyl = trimesh.primitives.Cylinder(radius=radius, height=np.linalg.norm(direction), transform=to_trimesh_transform(start, direction), sections=num_segments)
     return from_mesh(cyl, color, effect_f, 1, matrix, name)
 
 def arrow(start = [0,0,0], end = [0,0,1], thickness = 0.1, color = QColor("blue"), effect_f = CustomEffects.material, matrix = np.eye(4, dtype = 'f4'), name = "arrow"):
@@ -238,11 +238,13 @@ def arrow(start = [0,0,0], end = [0,0,1], thickness = 0.1, color = QColor("blue"
     start = utils.to_numpy(start)
     end = utils.to_numpy(end)
     direction = end - start
-    cyl = trimesh.primitives.Capsule(thickness, np.linalg.norm(direction), to_trimesh_transform(start, direction))
+    cyl = trimesh.primitives.Capsule(radius=thickness, height=np.linalg.norm(direction), transform=to_trimesh_transform(start, direction))
     return from_mesh(cyl, color, effect_f, 1, matrix, name)
 
 def to_trimesh_transform(start, direction):
     trimesh_axis = [0,0,1]
+
+
     Tf = np.eye(4)
     Tf[:3,:3] = utils.mat_from_vectors(trimesh_axis, direction)
     Tf[:3,3] = start

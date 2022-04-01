@@ -14,6 +14,7 @@ class Renderable(Product.Product):
     def __init__( self, parent = None ):
         super(Renderable, self).__init__( parent )
 
+    Product.InputProperty(vars(), Transform, 'transform', None)
 class Actor( Renderable ):
 
     def __init__( self, parent = None, geometry = None, effect = None, transform = None, name = None, visible = True, bbox = None, type_id = -1, instance_id = -1):
@@ -44,7 +45,11 @@ class Actor( Renderable ):
     hoverLeave = Signal('QVector3D', 'QVector3D', 'QVariant', 'QVariant'
     , arguments = ['worldOrigin', 'worldDirection', 'event', 'viewport'])
 
+    Product.InputProperty(vars(), bool, 'pickable', True) # ignored in picking?
+
     Product.InputProperty(vars(), bool, 'clickable', True) # Receives click and move signal
+
+    Product.InputProperty(vars(), bool, 'hoverable', True) # Receives hover signals
 
     Product.InputProperty(vars(), bool, 'mouseOver', False)
 
@@ -53,8 +58,6 @@ class Actor( Renderable ):
     Product.InputProperty(vars(), bool, 'selected', False)
 
     Product.InputProperty(vars(), Geometry, 'geometry', None)
-
-    Product.InputProperty(vars(), Transform, 'transform', None)
 
     Product.InputProperty(vars(), Effect, 'effect', None)
 
@@ -92,7 +95,7 @@ class Actors( Renderable ):
         return QQmlListProperty(Renderable, self, self._renderables)
 
     Product.InputProperty(vars(), QObject, 'instantiator', None)
-    Product.InputProperty(vars(), Transform, 'transform', None)
+
 
     @Slot(Renderable, result = Renderable)
     def addActor(self, actor):

@@ -5,7 +5,7 @@ from QtQmlViewport.Geometry import Geometry, BVH
 
 from PyQt5.QtQuick import QQuickFramebufferObject
 from PyQt5.QtGui import QMatrix4x4, QVector3D, QColor, qRgba
-from PyQt5.QtCore import Qt, QRectF, QTimer
+from PyQt5.QtCore import Qt, QRectF, QTimer, pyqtSlot as Slot
 
 import numpy as np
 import math, traceback, os, warnings
@@ -29,7 +29,6 @@ class Viewport( QQuickFramebufferObject ):
         self._start_up = None
 
         self._debug_actors = Actors()
-        self._debug = True
 
         self.render_to_texture_attachment = -1
 
@@ -38,6 +37,7 @@ class Viewport( QQuickFramebufferObject ):
 
         
         
+    Product.RWProperty(vars(), bool, 'debug', False)
 
     Product.RWProperty(vars(), Camera, 'camera', Camera())
 
@@ -107,26 +107,18 @@ class Viewport( QQuickFramebufferObject ):
         # the picking ray direction
         world_direction = (world_origin - cam_origin).normalized()
         return v,h,world_origin,world_direction
-
+    
     def pick(self, clicked_x, clicked_y, modifiers = None):
 
         v, h, world_origin, world_direction = self.pick_helper(clicked_x, clicked_y)
 
-        if self._debug and modifiers is not None and (modifiers & Qt.ShiftModifier):
-            np_origin = utils.to_numpy(world_origin)
-            np_v = utils.to_numpy(v)
-            np_h = utils.to_numpy(h)
 
-            self._debug_actors.clearActors()
-            self._debug_actors.addActor(CustomActors.arrow(np_origin, np_origin + np_h, 0.01, QColor('red')))
-            self._debug_actors.addActor(CustomActors.arrow(np_origin, np_origin + np_v, 0.01, QColor('green')))
-            self._debug_actors.addActor(CustomActors.arrow(np_origin, np_origin + utils.to_numpy(world_direction) * 100, 0.01, QColor('magenta')))
         
 
         min_t = float("inf")
         min_result = None
         for actor in self.renderer.sorted_actors:
-            if actor._geometry:
+            if actor._geometry and actor.pickable:
                 if actor._geometry.indices is not None\
                 and actor._geometry.attribs.vertices is not None:
 
@@ -162,8 +154,22 @@ class Viewport( QQuickFramebufferObject ):
                             min_result = (actor, bvh.indices.ndarray[object_id, None], np.array([[t, distance, real_distance]]), world_origin, world_direction, local_origin, local_direction)                       
                     
         
+        if self.debug and modifiers is not None and bool(modifiers & Qt.ShiftModifier):
+            np_origin = utils.to_numpy(world_origin)
+            np_v = utils.to_numpy(v)
+            np_h = utils.to_numpy(h)
+
+            self._debug_actors.clearActors()
+            a = self._debug_actors.addActor(CustomActors.arrow(np_origin, np_origin + np_h, 0.1, QColor('red')))
+            b = self._debug_actors.addActor(CustomActors.arrow(np_origin, np_origin + np_v, 0.1, QColor('green')))
+            c = self._debug_actors.addActor(CustomActors.arrow(np_origin, np_origin + utils.to_numpy(world_direction) * (min_t if min_t != float("inf") else 500.0), 0.1, QColor('magenta')))
+            a.pickable = False
+            b.pickable = False
+            c.pickable = False
+
         if min_result is not None:
             return min_result
+
 
         raise NothingToPickException(world_origin, world_direction)
 
@@ -183,7 +189,7 @@ class Viewport( QQuickFramebufferObject ):
 
     def mouseDoubleClickEvent(self, event):
         btns = event.buttons()
-        if btns & Qt.MidButton or (btns & Qt.LeftButton and event.modifiers() & Qt.ShiftModifier) :
+        if btns & Qt.MidButton or (btns & Qt.LeftButton and event.modifiers() & Qt.ControlModifier) :
             # centers camera on selected point
 
             try:
@@ -214,10 +220,11 @@ class Viewport( QQuickFramebufferObject ):
 
         if event.buttons() & Qt.LeftButton:
             try:
-                actor, ids, tuvs, world_origin, world_direction, local_origin, local_direction = self.pick(event.localPos().x(), event.localPos().y())
+                actor, ids, tuvs, world_origin, world_direction, local_origin, local_direction = self.pick(event.localPos().x(), event.localPos().y(), event.modifiers())
                 if actor.clickable:
                     self.signal_helper(actor.click, event, ids, tuvs, world_origin, world_direction, local_origin, local_direction)
                     self._clicked = actor
+                    self._clicked.destroyed.connect(self.clearClicked)
                     if actor.selectable:
                         self.selected = actor
                         self.selected.selected = True
@@ -270,7 +277,8 @@ class Viewport( QQuickFramebufferObject ):
         if self._clicked is not None:
                 
             _, _, world_origin, world_direction = self.pick_helper(event.pos().x(), event.pos().y())
-            self._clicked.release.emit(world_origin, world_direction, utils.QObject_to_dict(event), self)    
+            self._clicked.release.emit(world_origin, world_direction, utils.QObject_to_dict(event), self)
+            self._clicked.destroyed.disconnect(self.clearClicked)    
             self._clicked = None
 
 
@@ -294,29 +302,34 @@ class Viewport( QQuickFramebufferObject ):
         # re-paint at the next timer tick
         self.update()
 
-
-
+    @Slot()
+    def clearHovered(self):
+        self._hovered = None
+    @Slot()
+    def clearClicked(self):
+        self._clicked = None
     def hoverMoveEvent(self, event):
 
         try:
             actor, ids, tuvs, world_origin, world_direction, local_origin, local_direction = self.pick(event.pos().x(), event.pos().y(), event.modifiers())
             if actor == self._hovered:
-
                 self.signal_helper(actor.hoverMove, event, ids, tuvs, world_origin, world_direction, local_origin, local_direction)
             else:
                 
                 if self._hovered is not None: #release the previous pick
                     self._hovered.hoverLeave.emit(world_origin, world_direction, utils.QObject_to_dict(event), self)
                     self._hovered.mouseOver = False
-
-                self._hovered = actor
-                self.signal_helper(actor.hoverEnter, event, ids, tuvs, world_origin, world_direction, local_origin, local_direction)
-                actor.mouseOver = True
+                if actor.hoverable:
+                    self._hovered = actor
+                    self._hovered.destroyed.connect(self.clearHovered)
+                    self.signal_helper(actor.hoverEnter, event, ids, tuvs, world_origin, world_direction, local_origin, local_direction)
+                    actor.mouseOver = True
 
         except NothingToPickException as e:
             if self._hovered is not None:
                 self._hovered.hoverLeave.emit(e.world_origin, e.world_direction, utils.QObject_to_dict(event), self)
                 self._hovered.mouseOver = False
+                self._hovered.destroyed.disconnect(self.clearHovered)
             self._hovered = None
             pass
         except:
