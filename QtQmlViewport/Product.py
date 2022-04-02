@@ -76,7 +76,7 @@ class InputSetter(Setter):
         super().__init__(classvars, name, init_value, callback, before_write_callback)
         
     def _set(self, target, new_val):
-        if assign_input(target, self.property_name, new_val, self.before_write_callback):
+        if assign_input(target, self.property_name, new_val, self.before_write_callback if self.before_write_callback_name is None else getattr(target, self.before_write_callback_name)):
             self.apply_callback(target)
 
 
@@ -211,6 +211,17 @@ class Product(QObject):
         self._error = None
         self._producer = None
         self._children = []
+
+    parentChanged = Signal()
+    @Property(QObject, notify=parentChanged)
+    def parent(self):
+        return super().parent()
+
+    @parent.setter
+    def parent(self, _parent: 'Product'):
+        self.setParent(_parent)
+        self.parentChanged.emit()
+
 
     Q_CLASSINFO('DefaultProperty', 'children')
 

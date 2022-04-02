@@ -13,6 +13,13 @@ import numpy as np
 class Renderable(Product.Product):
     def __init__( self, parent = None ):
         super(Renderable, self).__init__( parent )
+    
+
+    def worldTransform(self):
+        tf = self.transform.worldTransform(True) if self.transform else QMatrix4x4()
+        if self.parent is not None and issubclass(type(self.parent), Actors):
+            return self.parent.worldTransform() * tf
+        return tf
 
     Product.InputProperty(vars(), Transform, 'transform', None)
 
@@ -34,6 +41,8 @@ class Actor( Renderable ):
         self.visible = visible
 
 
+
+
     click = Signal(int, 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVector3D', 'QVariant', 'QVariant'
                          , arguments = ['id', 'tuv', 'worldOrigin', 'worldDirection', 'localOrigin', 'localDirection', 'event', 'viewport'] )
     move = Signal('QVector3D', 'QVector3D', 'QVariant', 'QVariant'
@@ -46,6 +55,8 @@ class Actor( Renderable ):
                          , arguments = ['id', 'tuv', 'worldOrigin', 'worldDirection', 'event', 'viewport'] )
     hoverLeave = Signal('QVector3D', 'QVector3D', 'QVariant', 'QVariant'
     , arguments = ['worldOrigin', 'worldDirection', 'event', 'viewport'])
+
+    
 
     Product.InputProperty(vars(), bool, 'pickable', True) # ignored in picking?
 
@@ -63,9 +74,9 @@ class Actor( Renderable ):
 
     Product.InputProperty(vars(), Effect, 'effect', None)
 
-    
-
     Product.InputProperty(vars(), int, 'renderRank', 0)
+
+
 
 
 
@@ -78,61 +89,102 @@ class Actors( Renderable ):
         self.setObjectName(name)
         self._renderables = []
         self._manually_added = []
+        self._instantiated = []
         self.bbox = bbox
         self.scale = scale
         self.all_vertices = all_vertices
         self.type_id = type_id
         self.instance_id = instance_id
+        
 
         # Warning: Not a scene graph, totally manual feature, you have share this transform yourself
         # it is meant to be used to access and modify a transformed manually shared among actors (Advanced users :-) )
           
-        self.shared_transform = shared_transform 
+        self.shared_transform = shared_transform
+
 
 
     Q_CLASSINFO('DefaultProperty', 'renderables')
 
-    @Property(QQmlListProperty)
+    renderablesChanged = Signal()
+    @Property(QQmlListProperty, notify = renderablesChanged)
     def renderables(self):
-        return QQmlListProperty(Renderable, self, self._renderables)
+        return QQmlListProperty(Renderable, self, append = self.append_renderable, at=self.at_renderable, clear = self.clear_renderable, count = self.count_renderable)
 
-    Product.InputProperty(vars(), QObject, 'instantiator', None)
+    def append_renderable(self, _, renderable):
+        self.addActor(renderable, self._renderables)
+
+    def at_renderable(self, _, index):
+        return self._renderables[index]
+
+    def clear_renderable(self, _):
+        self.clearActors(self._renderables)
+
+    def count_renderable(self, _):
+        return self._renderables.count()
+    
+
+    Product.InputProperty(vars(), Transform, 'transform', None)
+
+    def objectAdded(self, index, object):
+        self.addActor(object, self._instantiated)
+    def objectRemoved(self, index, object):
+        self.removeActor(object, self._instantiated)
+
+    def cb_before_write_instantiator(self, instantiator):
+        if self.instantiator is not None:
+            self.instantiator.objectAdded.disconnect(self.objectAdded)
+            self.instantiator.objectRemoved.disconnect(self.objectRemoved)
+        if instantiator is not None:
+            instantiator.objectAdded.connect(self.objectAdded)
+            instantiator.objectRemoved.connect(self.objectRemoved)
+        return instantiator
+
+
+    Product.InputProperty(vars(), QObject, 'instantiator', None, callback = None, before_write_callback = cb_before_write_instantiator)
+
 
     actorsChanged = Signal()
 
     @Property(list, notify=actorsChanged)
     def actors(self):
-        return self.get_visible_actors()
+        return self.get_visible_actors() 
 
     @Slot(Renderable, result = Renderable)
-    def addActor(self, actor):
-        self._manually_added.append(actor)
-        actor.setParent(self)
+    def addActor(self, actor, container = None):
+        if container is None:
+            container = self._manually_added
+
+        container.append(actor)
+        actor.parent = self
         self.makeDirty()
         self.actorsChanged.emit()
         return actor
 
     @Slot()
-    def removeActor(self, actor):
-        if actor in self._manually_added:
-            self._manually_added.remove(actor)
+    def removeActor(self, actor, container = None):
+        if container is None:
+            container = self._manually_added
+        
+        if actor in container:
+            container.remove(actor)
             actor.setParent(None)
-            actor.deleteLater()
             self.makeDirty()
             self.actorsChanged.emit()
 
     @Slot()
-    def clearActors(self):
-        for a in self._manually_added:
+    def clearActors(self, container = None):
+        if container is None:
+            container = self._manually_added
+
+        for a in container:
             a.setParent(None)
-            a.deleteLater()
-        self._manually_added.clear()
+        container.clear()
         self.makeDirty()
         self.actorsChanged.emit()
 
     def children_actors(self):
-        qml = [] if self._instantiator is None else self._instantiator.children()
-        return self._manually_added + self._renderables + qml
+        return self._manually_added + self._renderables + self._instantiated
 
     def actor_to_id(self, id_to_actors = None):
 
@@ -217,19 +269,11 @@ class Actors( Renderable ):
                               
             raise TypeError(type(a))
 
-        for r in self._renderables:
+        all_actors = self.children_actors()
+        for r in all_actors:
             if recursive_check(r):
                 return True
 
-        for ma in self._manually_added:
-            if recursive_check(ma):
-                return True
-
-        if self.instantiator:
-            for c in self.instantiator.children():
-                if recursive_check(ma):
-                    return True
-        
         return False
 
     def get_visible_actors(self, parentTransform = QMatrix4x4()):
@@ -248,16 +292,10 @@ class Actors( Renderable ):
             elif issubclass(type(a), Actors):
                 actors.extend(a.get_visible_actors(tf)) #union of sets
 
-        for r in self._renderables:
+        all_actors = self.children_actors()
+
+        for r in all_actors:
             add_actor(r)
-
-        for ma in self._manually_added:
-            add_actor(ma)
-
-        if self.instantiator:
-            for c in self._instantiator.children():
-                add_actor(c)
-        
 
         return actors
 
