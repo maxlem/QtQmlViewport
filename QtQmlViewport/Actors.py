@@ -15,6 +15,8 @@ class Renderable(Product.Product):
         super(Renderable, self).__init__( parent )
 
     Product.InputProperty(vars(), Transform, 'transform', None)
+
+    Product.InputProperty(vars(), bool, 'visible', True)
 class Actor( Renderable ):
 
     def __init__( self, parent = None, geometry = None, effect = None, transform = None, name = None, visible = True, bbox = None, type_id = -1, instance_id = -1):
@@ -61,7 +63,7 @@ class Actor( Renderable ):
 
     Product.InputProperty(vars(), Effect, 'effect', None)
 
-    Product.InputProperty(vars(), bool, 'visible', True)
+    
 
     Product.InputProperty(vars(), int, 'renderRank', 0)
 
@@ -96,12 +98,18 @@ class Actors( Renderable ):
 
     Product.InputProperty(vars(), QObject, 'instantiator', None)
 
+    actorsChanged = Signal()
+
+    @Property(list, notify=actorsChanged)
+    def actors(self):
+        return self.get_visible_actors()
 
     @Slot(Renderable, result = Renderable)
     def addActor(self, actor):
         self._manually_added.append(actor)
         actor.setParent(self)
         self.makeDirty()
+        self.actorsChanged.emit()
         return actor
 
     @Slot()
@@ -111,6 +119,7 @@ class Actors( Renderable ):
             actor.setParent(None)
             actor.deleteLater()
             self.makeDirty()
+            self.actorsChanged.emit()
 
     @Slot()
     def clearActors(self):
@@ -119,6 +128,7 @@ class Actors( Renderable ):
             a.deleteLater()
         self._manually_added.clear()
         self.makeDirty()
+        self.actorsChanged.emit()
 
     def children_actors(self):
         qml = [] if self._instantiator is None else self._instantiator.children()
@@ -192,6 +202,10 @@ class Actors( Renderable ):
 
     def is_any_visible_actor_dirty(self):
 
+
+        if not self.visible:
+            return False
+
         def recursive_check(a):
             if issubclass(type(a), Actor):
                 if a.visible:
@@ -219,6 +233,10 @@ class Actors( Renderable ):
         return False
 
     def get_visible_actors(self, parentTransform = QMatrix4x4()):
+        
+        if not self.visible:
+            return []
+
         actors = []
 
         tf = parentTransform * (self.transform.worldTransform(True) if self.transform else QMatrix4x4())
