@@ -1,3 +1,4 @@
+from QtQmlViewport import utils
 from PyQt5.QtCore import pyqtSignal as Signal, pyqtProperty as Property, pyqtSlot as Slot, QObject, QTimer, QVariant, Q_CLASSINFO
 from PyQt5.QtQml import QJSValue, QQmlListProperty, QQmlContext, QQmlEngine
 import sip #isdeleted
@@ -10,7 +11,8 @@ class Setter(object):
         self.attr_name = f'_{name}'
         self.signal_name = f'{name}Changed'
 
-        
+        if self.init_value is not None and issubclass(type(init_value), QObject):
+            utils.LoggingManager.instance().warning(f"init value's instance {self.init_value} will be shared by all {classvars}'s instances")
 
         self.callback_name = None
         self.callback = None
@@ -125,7 +127,7 @@ def RWProperty(classvars, typename, name, init_value, callback = None, before_wr
     '''
         This function adds a QProperty named 'name' to a class's vars() dictionary.
         It create the getter, setter, and signal named 'nameChanged'.
-
+        *Important* init_value's instance will be shared by all property holder's instance
         *Important* if not already present, a member variable named '_name' 
         will be added to the instance by the first call to the getter or setter.
 

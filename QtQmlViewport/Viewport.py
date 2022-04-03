@@ -23,6 +23,7 @@ class Viewport( QQuickFramebufferObject ):
         self.setAcceptedMouseButtons(Qt.AllButtons)
         self.setAcceptHoverEvents(True)
         self.renderer = None
+        self.camera = Camera()
 
         self._mouse_start = None
         self._start_eye = None
@@ -39,7 +40,7 @@ class Viewport( QQuickFramebufferObject ):
         
     Product.RWProperty(vars(), bool, 'debug', False)
 
-    Product.RWProperty(vars(), Camera, 'camera', Camera())
+    Product.RWProperty(vars(), Camera, 'camera', None)
 
     Product.RWProperty(vars(), QColor, 'backgroundColor', QColor(qRgba(1,1,1,1)))
 
@@ -53,19 +54,19 @@ class Viewport( QQuickFramebufferObject ):
         return self.width()/self.height()
     
     def view_matrix(self):
-        return self._camera.view_matrix()
+        return self.camera.view_matrix()
 
     def perspective_matrix(self):
-        if self._camera.perspective_override is None:
+        if self.camera.perspective_override is None:
             p = QMatrix4x4()
-            p.perspective(self._camera.vfov, self.aspect_ratio(), self._camera.near, self._camera.far)
+            p.perspective(self.camera.vfov, self.aspect_ratio(), self.camera.near, self.camera.far)
             return p
         else:
-            return self._camera.perspective_override
+            return self.camera.perspective_override
 
     def orthographic_matrix(self):
         p = QMatrix4x4()
-        p.ortho(0, self.width(), 0, self.height(), self._camera.near, self._camera.far)
+        p.ortho(0, self.width(), 0, self.height(), self.camera.near, self.camera.far)
         return p
 
 
@@ -75,19 +76,19 @@ class Viewport( QQuickFramebufferObject ):
         # http://schabby.de/picking-opengl-ray-tracing/
         aspect_ratio = self.aspect_ratio()
 
-        cam_origin = self._camera.eye
-        cam_direction = (self._camera.center - cam_origin).normalized()
+        cam_origin = self.camera.eye
+        cam_direction = (self.camera.center - cam_origin).normalized()
 
         # The coordinate system we chose has x pointing right, y pointing down, z pointing into the screen
         # in screen coordinates, the vertical axis points down, this coincides with our 'y' axis.
-        v = -self._camera._up # our y axis points down
+        v = -self.camera._up # our y axis points down
 
         # in screen coordinates, the horizontal axis points right, this coincides with our x axis
-        h = QVector3D.crossProduct(cam_direction, self._camera._up).normalized() # cam_direction points into the screen
+        h = QVector3D.crossProduct(cam_direction, self.camera._up).normalized() # cam_direction points into the screen
 
-        # in InFobRenderer::render(), we use Viewport::perspective_matrix(), where self._camera.fov is used 
+        # in InFobRenderer::render(), we use Viewport::perspective_matrix(), where self.camera.fov is used 
         # as QMatrix4x4::perspective()'s verticalAngle parameter, so near clipping plane's vertical scale is given by:
-        v_scale = math.tan( math.radians(self._camera.vfov) / 2 ) * self._camera.near
+        v_scale = math.tan( math.radians(self.camera.vfov) / 2 ) * self.camera.near
         h_scale = v_scale * aspect_ratio
 
         # translate mouse coordinates so that the origin lies in the center
@@ -102,7 +103,7 @@ class Viewport( QQuickFramebufferObject ):
 
         # the picking ray origin: corresponds to the intersection of picking ray with
         # near plane (we don't want to pick actors behind the near plane)
-        world_origin = cam_origin + cam_direction * self._camera.near + h * h_scale * x + v * v_scale * y
+        world_origin = cam_origin + cam_direction * self.camera.near + h * h_scale * x + v * v_scale * y
 
         # the picking ray direction
         world_direction = (world_origin - cam_origin).normalized()
@@ -190,19 +191,23 @@ class Viewport( QQuickFramebufferObject ):
     def mouseDoubleClickEvent(self, event):
         btns = event.buttons()
         if btns & Qt.MidButton or (btns & Qt.LeftButton and event.modifiers() & Qt.ControlModifier) :
-            # centers camera on selected point
-
             try:
                 _, _, tuvs, world_origin, world_direction, _, _ = self.pick(event.localPos().x(), event.localPos().y())
-
                 p = world_origin + world_direction * tuvs[0,0]
-                self._camera.center = p
-                self._camera.eye = world_origin
+                self.setCameraRotationCenter(world_origin, p)
+
             except NothingToPickException:
                 pass
             except:
                 traceback.print_exc()
-            self.update()
+
+    @Slot(QVector3D, QVector3D)
+    def setCameraRotationCenter(self, eye, center):
+        # centers camera on selected point
+        self.camera.center = center
+        self.camera.eye = eye
+        self.update()
+
 
     def signal_helper(self, signal, event, ids, tuvs, world_origin, world_direction, local_origin, local_direction):
         if len(ids) > 0:
@@ -214,8 +219,8 @@ class Viewport( QQuickFramebufferObject ):
         Called by the Qt libraries whenever the window receives a mouse click.
         """
         self._mouse_start = (event.localPos().x(), event.localPos().y())
-        self._start_eye = self._camera.eye
-        self._start_up = self._camera.up
+        self._start_eye = self.camera.eye
+        self._start_up = self.camera.up
         self._start_center = self.camera.center
 
         if event.buttons() & Qt.LeftButton:
@@ -261,13 +266,13 @@ class Viewport( QQuickFramebufferObject ):
                 self._clicked.move.emit(world_origin, world_direction, utils.QObject_to_dict(event), self)
             else:
                 # we want half a screen movement rotates the camera 90deg:
-                self._camera.pan_tilt(self._start_eye, self._start_up, 90.0 * dx/h_width, 90.0 * dy/h_height)
+                self.camera.pan_tilt(self._start_eye, self._start_up, 90.0 * dx/h_width, 90.0 * dy/h_height)
 
         elif btns & Qt.MidButton:
-            self._camera.translate(self._start_eye, self._start_center, -dx/h_width, dy/h_height)
+            self.camera.translate(self._start_eye, self._start_center, -dx/h_width, dy/h_height)
 
         elif btns & (Qt.RightButton):
-            self._camera.roll(self._start_eye, self._start_up, -90.0 * dy/h_width)
+            self.camera.roll(self._start_eye, self._start_up, -90.0 * dy/h_width)
 
         # re-draw at next timer tick
         self.update()
@@ -290,14 +295,14 @@ class Viewport( QQuickFramebufferObject ):
 
         # move in look direction of camera
         # note: this will only do something for non-orthographic projection
-        front = self._camera.center - self._camera.eye
+        front = self.camera.center - self.camera.eye
         if event.modifiers() & Qt.ShiftModifier:
             factor = (5*120)
         else:
             factor = (5*12)
         d = front.normalized() * delta/factor
-        self._camera.eye -= d
-        self._camera.center -= d
+        self.camera.eye -= d
+        self.camera.center -= d
 
         # re-paint at the next timer tick
         self.update()

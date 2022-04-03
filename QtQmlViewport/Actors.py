@@ -118,7 +118,7 @@ class Actors( Renderable ):
         return self._renderables[index]
 
     def clear_renderable(self, _):
-        self.clearActors(self._renderables)
+        self.clearActors(True, self._renderables)
 
     def count_renderable(self, _):
         return self._renderables.count()
@@ -129,7 +129,7 @@ class Actors( Renderable ):
     def objectAdded(self, index, object):
         self.addActor(object, self._instantiated)
     def objectRemoved(self, index, object):
-        self.removeActor(object, self._instantiated)
+        self.removeActor(object, True, self._instantiated)
 
     def cb_before_write_instantiator(self, instantiator):
         if self.instantiator is not None:
@@ -162,25 +162,27 @@ class Actors( Renderable ):
         return actor
 
     @Slot()
-    def removeActor(self, actor, container = None):
+    def removeActor(self, actor, delete = False, container = None):
         if container is None:
             container = self._manually_added
         
         if actor in container:
             container.remove(actor)
             actor.setParent(None)
-            actor.deleteLater()
+            if delete:
+                actor.deleteLater()
             self.makeDirty()
             self.actorsChanged.emit()
 
     @Slot()
-    def clearActors(self, container = None):
+    def clearActors(self, delete = False, container = None):
         if container is None:
             container = self._manually_added
 
         for a in container:
             a.setParent(None)
-            a.deleteLater()
+            if delete:
+                a.deleteLater()
         container.clear()
         self.makeDirty()
         self.actorsChanged.emit()

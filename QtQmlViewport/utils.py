@@ -1,5 +1,3 @@
-from QtQmlViewport import Transforms, Array
-
 from PyQt5.QtCore import QUrl, QTimer, QObject, QVariant, pyqtBoundSignal as BoundSignal
 from PyQt5.QtQuick import QQuickView
 from PyQt5.QtQml import QQmlProperty, QJSValue, QQmlApplicationEngine, qmlRegisterSingletonType
@@ -12,7 +10,6 @@ import re
 import sys
 import warnings
 import transforms3d
-from . import Transforms, Array
 from PIL import Image
 
 #os.environ['QT_OPENGL'] = "dynamic"
@@ -299,7 +296,7 @@ def to_numpy(v, dtype = np.float32):
                             ,[v[1,0], v[1,1], v[1,2], v[1,3]]
                             ,[v[2,0], v[2,1], v[2,2], v[2,3]]
                             ,[v[3,0], v[3,1], v[3,2], v[3,3]]], dtype)
-    if isinstance(v, Transforms.Transform):
+    if hasattr(v, "worldTransform"):
         return to_numpy(v.worldTransform(True))
 
     return v
