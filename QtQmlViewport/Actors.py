@@ -148,7 +148,7 @@ class Actors( Renderable ):
 
     @Property(list, notify=actorsChanged)
     def actors(self):
-        return self.get_visible_actors() 
+        return self.children_actors()
 
     @Slot(Renderable, result = Renderable)
     def addActor(self, actor, container = None):
@@ -169,6 +169,7 @@ class Actors( Renderable ):
         if actor in container:
             container.remove(actor)
             actor.setParent(None)
+            actor.deleteLater()
             self.makeDirty()
             self.actorsChanged.emit()
 
@@ -179,6 +180,7 @@ class Actors( Renderable ):
 
         for a in container:
             a.setParent(None)
+            a.deleteLater()
         container.clear()
         self.makeDirty()
         self.actorsChanged.emit()

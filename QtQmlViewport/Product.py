@@ -1,5 +1,6 @@
 from PyQt5.QtCore import pyqtSignal as Signal, pyqtProperty as Property, pyqtSlot as Slot, QObject, QTimer, QVariant, Q_CLASSINFO
-from PyQt5.QtQml import QJSValue, QQmlListProperty
+from PyQt5.QtQml import QJSValue, QQmlListProperty, QQmlContext, QQmlEngine
+import sip #isdeleted
 import traceback
 
 class Setter(object):
@@ -211,6 +212,7 @@ class Product(QObject):
         self._error = None
         self._producer = None
         self._children = []
+        self.name = str(self.__class__)
 
     parentChanged = Signal()
     @Property(QObject, notify=parentChanged)
@@ -222,6 +224,7 @@ class Product(QObject):
         self.setParent(_parent)
         self.parentChanged.emit()
 
+    RWProperty(vars(), str, 'name', "")
 
     Q_CLASSINFO('DefaultProperty', 'children')
 
@@ -299,7 +302,9 @@ class Product(QObject):
         if d is not None:
             if d in self._dependencies:
                 self._dependencies.remove(d)
-                d.productDirty.disconnect(self.makeDirty)
+                
+                if not sip.isdeleted(d):
+                    d.productDirty.disconnect(self.makeDirty)
             self.makeDirty()
 
     def set_producer(self, producer):

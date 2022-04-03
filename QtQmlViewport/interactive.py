@@ -21,8 +21,8 @@ class InteractiveHelper(object):
         '''
         self.app = QApplication(sys.argv)
         ## This remove the following warning at the started of the viewer : QML Settings: The following application identifiers have not been set: QVector("organizationName", "organizationDomain")
-        self.app.setOrganizationName("Leddartech")
-        self.app.setOrganizationDomain("Advanced_Engineering")
+        self.app.setOrganizationName("Organisation")
+        self.app.setOrganizationDomain("Domain")
         # https://machinekoder.com/how-to-not-shoot-yourself-in-the-foot-using-python-qt/
         self.timer = QTimer()
         self.timer.timeout.connect(lambda: None)
