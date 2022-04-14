@@ -5,8 +5,8 @@ from QtQmlViewport.Transforms import Transform
 from QtQmlViewport.Effect import Effect
 from QtQmlViewport.Array import ArrayBase
 from QtQmlViewport.Product import Product
-
-from dataclasses import dataclass, field
+import re
+from PyQt5.QtGui import QVector3D
 from PyQt5.QtCore import (
     QAbstractItemModel,
     QByteArray,
@@ -15,7 +15,8 @@ from PyQt5.QtCore import (
     QObject,
     QVariant,
     pyqtProperty as Property,
-    pyqtSignal as Signal
+    pyqtSignal as Signal,
+    pyqtSlot as Slot
 )
 from enum import IntEnum, auto
 
@@ -38,6 +39,15 @@ class ItemProperty(object):
             raise Exception("not readable")
 
         return getattr(self.actor, self.metaProperty.name())
+    def write(self, value):
+        self.check()
+        if not self.metaProperty.isWritable():
+            raise Exception("not writable")
+        
+        # if not isinstance(value, QVariant):
+        #     raise Exception(f"wrong type: {type(value)}")
+
+        setattr(self.actor, self.metaProperty.name(), value)
 
     def name(self):
         self.check()
@@ -49,7 +59,7 @@ class ItemProperty(object):
 
 ROLES_MAPPPING = {
     Roles.ActorsNameRole: "ActorsNameRole",
-    Roles.NameRole: "name",
+    Roles.NameRole: "NameRole",
 }
 
 class ActorsModel(QAbstractItemModel):
@@ -154,3 +164,28 @@ class ActorsModel(QAbstractItemModel):
                 return item.objectName()
             elif isinstance(item, ItemProperty):
                 return item.read()
+
+    # @Slot(QModelIndex, str)
+    def setData(self, index, value, role):
+        item = index.internalPointer()
+        if not isinstance(item, ItemProperty):
+            raise Exception("bad index")
+        
+        if item.type() == QVariant.Bool:
+            item.write(True if value == "true" else False)
+        elif item.type() == QVariant.String:
+            item.write(value)
+        elif item.type() == QVariant.Double:
+            item.write(float(value))
+        elif item.type() == QVariant.Vector3D:
+            match = re.match(r"QVector3D\(([+-]?([0-9]*[.])?[0-9]+)\s*,\s*([+-]?([0-9]*[.])?[0-9]+)\s*,\s*([+-]?([0-9]*[.])?[0-9]+)\)", value)
+            if match is None:
+                raise Exception(f"bad value for type {item.type()}: {value}")
+            item.write(QVector3D(float(match.group(1)), float(match.group(3)), float(match.group(5))))
+        else:
+            raise Exception(f"Unsupported type {item.type()}")
+        
+        self.dataChanged.emit(index, index)
+        
+        return True
+            
