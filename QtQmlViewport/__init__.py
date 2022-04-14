@@ -7,12 +7,12 @@ from PyQt5.QtQml import qmlRegisterType, qmlRegisterSingletonType
 
 #generic non-leddar-related modules
 
-from . import Viewport, Camera, Actors, Geometry, Effect, Array, Transforms, Product, CustomAttribs, CustomEffects
+from . import Viewport, Camera, Actors, ActorsModel, Geometry, Effect, Array, Transforms, Product, CustomAttribs, CustomEffects
 
 
 
 
-
+qmlRegisterType(ActorsModel.ActorsModel, "Viewport", 1, 0, "ActorsModel")
 
 qmlRegisterType(Product.Product, "Viewport", 1, 0, "Product" )
 qmlRegisterType(Product.VariantProduct, "Viewport", 1, 0, "VariantProduct" )

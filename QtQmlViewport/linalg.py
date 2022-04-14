@@ -50,6 +50,9 @@ def to_homo(v):
 def from_homo(v):
     return v[0:3]/v[3]
 
+def rot2d(theta):
+    return np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
+    
 def map_point(m:np.ndarray, v:np.ndarray) ->  np.ndarray:
     '''Apply a 4x4 transform on 3x1 point
     Args:

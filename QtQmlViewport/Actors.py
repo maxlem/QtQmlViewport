@@ -143,6 +143,9 @@ class Actors( Renderable ):
 
     Product.InputProperty(vars(), QObject, 'instantiator', None, callback = None, before_write_callback = cb_before_write_instantiator)
 
+    @Property(int, notify=renderablesChanged)
+    def count(self):
+        return len(self.children_actors())
 
     actorsChanged = Signal()
 
@@ -289,19 +292,16 @@ class Actors( Renderable ):
 
         tf = parentTransform * (self.transform.worldTransform(True) if self.transform else QMatrix4x4())
 
-        def add_actor(a):
+
+        all_actors = self.children_actors()
+
+        for a in all_actors:
             if issubclass(type(a), Actor):
                 if a.visible:
                     actors.append((a, tf))
             elif issubclass(type(a), Actors):
                 actors.extend(a.get_visible_actors(tf)) #union of sets
 
-        all_actors = self.children_actors()
-
-        for r in all_actors:
-            add_actor(r)
-
         return actors
-
 
 

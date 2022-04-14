@@ -81,10 +81,10 @@ class Viewport( QQuickFramebufferObject ):
 
         # The coordinate system we chose has x pointing right, y pointing down, z pointing into the screen
         # in screen coordinates, the vertical axis points down, this coincides with our 'y' axis.
-        v = -self.camera._up # our y axis points down
+        v = -self.camera.up # our y axis points down
 
         # in screen coordinates, the horizontal axis points right, this coincides with our x axis
-        h = QVector3D.crossProduct(cam_direction, self.camera._up).normalized() # cam_direction points into the screen
+        h = QVector3D.crossProduct(cam_direction, self.camera.up).normalized() # cam_direction points into the screen
 
         # in InFobRenderer::render(), we use Viewport::perspective_matrix(), where self.camera.fov is used 
         # as QMatrix4x4::perspective()'s verticalAngle parameter, so near clipping plane's vertical scale is given by:

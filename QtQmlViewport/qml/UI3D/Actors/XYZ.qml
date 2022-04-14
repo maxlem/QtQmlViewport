@@ -12,12 +12,14 @@ import UI3D 1.0
 Actors
 {
   id: component
+  name: "XYZ"
   property bool visible : true
   property alias transform: x_.transform
   property real scale: 1
   Line
   {
     id: x_
+    name: component.name + ".x"
     visible: component.visible
     from: [0,0,0]
     to: [scale,0,0]
@@ -27,6 +29,7 @@ Actors
   Line
   {
     id: y_
+    name: component.name + ".y"
     visible: component.visible
     from: [0,0,0]
     to: [0,scale,0]
@@ -36,6 +39,7 @@ Actors
   Line
   {
     id: z_
+    name: component.name + ".z"
     visible: component.visible
     from: [0,0,0]
     to: [0,0,scale]

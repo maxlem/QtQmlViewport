@@ -214,7 +214,7 @@ class Product(QObject):
         self._error = None
         self._producer = None
         self._children = []
-        self.name = str(self.__class__)
+        self.name = self.metaObject().className()
 
     parentChanged = Signal()
     @Property(QObject, notify=parentChanged)
@@ -226,7 +226,10 @@ class Product(QObject):
         self.setParent(_parent)
         self.parentChanged.emit()
 
-    RWProperty(vars(), str, 'name', "")
+    def cb_name(self):
+        self.setObjectName(self.name)
+
+    RWProperty(vars(), str, 'name', "", cb_name)
 
     Q_CLASSINFO('DefaultProperty', 'children')
 
