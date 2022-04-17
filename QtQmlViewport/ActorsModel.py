@@ -6,6 +6,7 @@ from QtQmlViewport.Effect import Effect
 from QtQmlViewport.Array import ArrayBase
 from QtQmlViewport.Product import Product
 import re
+import sys
 from PyQt5.QtGui import QVector3D
 from PyQt5.QtCore import (
     QAbstractItemModel,
@@ -24,37 +25,71 @@ class Roles(IntEnum):
     ActorsNameRole = Qt.UserRole
     NameRole = auto()
 
-class ItemProperty(object):
-    def __init__(self, actor=None, metaproperty = None):
-        self.actor = actor
-        self.metaProperty = metaproperty
+class QProperty(object):
+    def __init__(self, qobject, metaproperty, row, model):
+        self._qobject = qobject
+        self._metaProperty = metaproperty
+        self._row = row
+        self._model = model
+        self._index = QModelIndex()
+
+        if self._metaProperty.hasNotifySignal():
+            metaMethod = self._metaProperty.notifySignal()
+            signal = getattr(self._qobject, metaMethod.name().data().decode('utf8'))
+            signal.connect(self.notify)
+
+    def setIndex(self, index):
+        self._index = index
+
     def check(self):
-        if self.actor is None:
+        if self._qobject is None:
             raise Exception("actor is None")
-        if self.metaProperty is None:
+        if self._metaProperty is None:
             raise Exception("metaProperty is None")
     def read(self):
         self.check()
-        if not self.metaProperty.isReadable():
+        if not self._metaProperty.isReadable():
             raise Exception("not readable")
 
-        return getattr(self.actor, self.metaProperty.name())
+        return getattr(self._qobject, self._metaProperty.name())
     def write(self, value):
         self.check()
-        if not self.metaProperty.isWritable():
+        if not self._metaProperty.isWritable():
             raise Exception("not writable")
         
         # if not isinstance(value, QVariant):
         #     raise Exception(f"wrong type: {type(value)}")
 
-        setattr(self.actor, self.metaProperty.name(), value)
+        setattr(self._qobject, self._metaProperty.name(), value)
 
     def name(self):
         self.check()
-        return self.metaProperty.name()
+        return self._metaProperty.name()
     
+    def objectName(self):
+        return self._qobject.objectName()
+
     def type(self):
-        return self.metaProperty.type()
+        return self._metaProperty.type()
+
+    def owner(self):
+        return self._qobject
+    
+    def leaf(self, leafTypes):
+        if self.type() == QVariant.UserType:
+            value = self.read()
+            if isinstance(value, leafTypes):
+                return value
+        return None
+    def row(self):
+        return self._row
+
+    def notify(self):
+
+        self._model.beginResetModel()
+        # self._model.dataChanged.emit(self._index, self._index)
+        self._model.endResetModel()
+
 
 
 ROLES_MAPPPING = {
@@ -62,12 +97,35 @@ ROLES_MAPPPING = {
     Roles.NameRole: "NameRole",
 }
 
+# Example
+#
+# parent     |  type     |leaf| ActorsNameRole                           |     NameRole                                             
+# ------     | --------- |---| ---------------------------------------- | ------------------------------ 
+#  None      |  Actors   |   |- root                                    |   root name                                              
+#  root      |  Actor    |   |   |- actorA                              |   actorA name                         
+#  actorA    |  QProperty |   |   |    |- propertyA (int)                |   1234             
+#  actorA    |  QProperty |   |   |    |- propertyB (float)              |   1234.0f            
+#  actorA    |  QProperty |   |   |    |- propertyC (QVector3D)          |   QVector3D(1,2,3)             
+#  actorA    |  QProperty |[x]|   |    |- propertyD (Geometry*)          |   geometry name            
+#  propertyD |  QProperty |   |   |    |     |- propertyE (int)          |   1234             
+#  propertyD |  QProperty |   |   |    |     |- propertyF (float)        |   1234.0f            
+#  propertyD |  QProperty |   |   |    |     |- propertyG (QVector3D)    |   QVector3D(1,2,3)               
+#  propertyD |  QProperty |[x]|   |    |     |- propertyH (Transform*)   |   transform name                                    |              
+#  propertyH |  QProperty |   |   |    |           |- [...]              |   [...]           
+#  actorA    |  QProperty |   |   |    |-[...]                           |   [...]
+#  root      |  Actors   |   |   |- actorsA                             |   actorsA name           
+#  actorsA   |  Actor    |   |   |     |- actorB                        |   actorB name
+#  actorB    |  QProperty |   |   |           |-[...]                    |   [...]
+#  root      |  Actor    |   |   |- actorC                              |   actorC name
+#  actorC    |  QProperty |   |          |-[...]                         |   [...]
+
 class ActorsModel(QAbstractItemModel):
 
-    LeafTypes = (Actor, Geometry, Effect, Transform, ArrayBase)
+    LeafTypes = (Geometry, Effect, Transform, ArrayBase)
     
     def __init__(self, parent = None):
         super().__init__(parent)
+        self._offset = Product.staticMetaObject.propertyOffset()
         self._root = None
         self._rolenames = dict()
         self._rolenames[Qt.DisplayRole] = QByteArray(b"display")
@@ -96,53 +154,67 @@ class ActorsModel(QAbstractItemModel):
             item = parent.internalPointer()
             if isinstance(item, Actors):
                 return item.count
-            elif isinstance(item, self.LeafTypes):
-                return item.metaObject().propertyCount() - Product.staticMetaObject.propertyOffset()
-            elif isinstance(item, ItemProperty):
-                if item.type() == QVariant.UserType:
-                    value = item.read()
-                    if value is not None and isinstance(value, self.LeafTypes):
-                        return 1
+            elif isinstance(item, Actor):
+                return item.metaObject().propertyCount() - self._offset
+            elif isinstance(item, QProperty):
+                value = item.leaf(self.LeafTypes)
+                if value is not None:
+                    return value.metaObject().propertyCount() - self._offset
             return 0
         else:
             return self.root.count
 
     def index(self, row, column, parent=QModelIndex()):
+
         if column != 0:
             return QModelIndex()
         if not self.hasIndex(row, column, parent):
             return QModelIndex()
         if parent.isValid():
-            item = parent.internalPointer()
-            if isinstance(item, Actors):
-                return self.createIndex(row, column, item.actors[row])
-            elif isinstance(item, self.LeafTypes):
-                offset = Product.staticMetaObject.propertyOffset()
-                
-                if not item in self._cache:
-                    self._cache[item] = {}
-                if not row in self._cache[item]:
-                    self._cache[item][row] = ItemProperty(item, item.metaObject().property(row+offset))
-                return self.createIndex(row, column, self._cache[item][row])
-            elif isinstance(item, ItemProperty):
-                if item.type() == QVariant.UserType:
-                    value = item.read()
-                    if value is not None and isinstance(value, self.LeafTypes):
-                        return self.createIndex(row, column, value)
+            parentItem = parent.internalPointer()
+            if isinstance(parentItem, Actors):
+                print(f"{sys._getframe().f_lineno} index {(row,column)}  data {parentItem.actors[row]} ({parentItem.actors[row].objectName()})")
+                return self.createIndex(row, column, parentItem.actors[row])
+            elif isinstance(parentItem, Actor):
+                qprop = self.cache(parentItem, row)
+                index = self.createIndex(row, column, qprop)
+                qprop.setIndex(index)
+                print(f"{sys._getframe().f_lineno} index {(row,column)}  data {qprop} ({qprop.objectName()})")
+                return index
+            elif isinstance(parentItem, QProperty):
+                value = parentItem.leaf(self.LeafTypes)
+                if value is not None:
+                    qprop = self.cache(value, row)
+                    index = self.createIndex(row, column, qprop)
+                    qprop.setIndex(index)
+                    print(f"{sys._getframe().f_lineno} index {(row,column)}  data {qprop} ({qprop.objectName()})")
+                    return index
+                    
             return QModelIndex()
         else:
+            print(f"{sys._getframe().f_lineno} index {(row,column)}  data { self.root.actors[row]} ({self.root.actors[row].objectName()})")
             return self.createIndex(row, column, self.root.actors[row])
+        
+    def cache(self, qobject, row):
+        if not qobject in self._cache:
+            self._cache[qobject] = {}
+        if not row in self._cache[qobject]:
+            self._cache[qobject][row] = QProperty(qobject, qobject.metaObject().property(row+self._offset), row, self)
+        return self._cache[qobject][row]
 
     def parent(self, index):
         if not index.isValid():
             return QModelIndex()
         item = index.internalPointer()
-        if isinstance(item, Actors):
+        if item == self.root:
             return QModelIndex()
-        elif isinstance(item, self.LeafTypes):
-            return self.createIndex(0, 0, item.parent)
-        elif isinstance(item, ItemProperty):
-            return self.createIndex(0, 0, item.actor)
+        if isinstance(item, (Actors, Actor)):
+            parentItem = item.parent
+            if not isinstance(parentItem, Actors):
+                raise Exception(f"unexpected parent type {type(parentItem)}")
+            return self.createIndex(parentItem.actors.index(item), 0, parentItem)
+        elif isinstance(item, QProperty):
+            return self.createIndex(item.row(), 0, item.owner())
         return QModelIndex()
 
     def data(self, index, role=Qt.DisplayRole):
@@ -152,40 +224,60 @@ class ActorsModel(QAbstractItemModel):
         if role == Qt.DisplayRole:
             return str(index.internalPointer())
         elif role == Roles.ActorsNameRole:
-            if isinstance(item, Actors):
+            if isinstance(item, (Actor, Actors)):
                 return item.name
-            elif isinstance(item, self.LeafTypes):
-                return index.parent().internalPointer().name
-            elif isinstance(item, ItemProperty):
+            elif isinstance(item, QProperty):
                 return item.name()
             return
         elif role == Roles.NameRole:
-            if isinstance(item, self.LeafTypes):
-                return item.objectName()
-            elif isinstance(item, ItemProperty):
+            if isinstance(item, (Actor, Actors)):
+                return str(item)
+            if isinstance(item, QProperty):
                 return item.read()
-
-    # @Slot(QModelIndex, str)
-    def setData(self, index, value, role):
+    
+    def flags(self, index):
+        flag = Qt.ItemIsEnabled | Qt.ItemIsSelectable
         item = index.internalPointer()
-        if not isinstance(item, ItemProperty):
+        if isinstance(item, QProperty) and item.type() in [QVariant.Bool, QVariant.String, QVariant.Double, QVariant.Vector3D]:
+            flag |= Qt.ItemIsEditable
+        return flag
+
+
+
+    def setData(self, index, value, role = Qt.EditRole):
+
+        if role != Qt.EditRole:
+            return False
+
+        item = index.internalPointer()
+        if not isinstance(item, QProperty):
             raise Exception("bad index")
         
+        rv = True
+
         if item.type() == QVariant.Bool:
             item.write(True if value == "true" else False)
         elif item.type() == QVariant.String:
             item.write(value)
+        elif item.type() == QVariant.Int:
+            item.write(int(value))
         elif item.type() == QVariant.Double:
             item.write(float(value))
         elif item.type() == QVariant.Vector3D:
             match = re.match(r"QVector3D\(([+-]?([0-9]*[.])?[0-9]+)\s*,\s*([+-]?([0-9]*[.])?[0-9]+)\s*,\s*([+-]?([0-9]*[.])?[0-9]+)\)", value)
             if match is None:
-                raise Exception(f"bad value for type {item.type()}: {value}")
-            item.write(QVector3D(float(match.group(1)), float(match.group(3)), float(match.group(5))))
+                print(f"bad value for type {item.type()}: {value}")
+                rv = False
+            else:
+                item.write(QVector3D(float(match.group(1)), float(match.group(3)), float(match.group(5))))
         else:
-            raise Exception(f"Unsupported type {item.type()}")
+            rv = False
+            print(f"Unsupported type {item.type()}")
         
-        self.dataChanged.emit(index, index)
+        # if rv: # something is wrong with dataChanged()
+        #     self.beginResetModel()
+            # self.dataChanged.emit(index, index)
+            # self.endResetModel()
         
-        return True
+        return rv
             

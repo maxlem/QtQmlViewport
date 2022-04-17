@@ -1,4 +1,4 @@
-import QtQuick 2.0
+import QtQuick 2.14
 
 Rectangle {
     id: root
@@ -6,11 +6,20 @@ Rectangle {
     property bool mode: false
     Component{
         id: component_display
-        Text{}
+        Text{text: root.text}
     }
     Component{
         id: component_edit
-        TextInput{}
+        TextInput
+        {
+            text: root.text
+            onEditingFinished:
+            {
+                root.mode = false
+                if (root.callback != "undefined")
+                    root.callback(text)
+            }
+        }
     }
 
     property var callback
@@ -20,16 +29,9 @@ Rectangle {
         anchors.fill: parent
         sourceComponent: mode ? component_edit: component_display
         onSourceComponentChanged: {
-            loader.item.text = root.text
             if(sourceComponent === component_edit){
-                loader.item.editingFinished.connect(onEditingFinished)
                 loader.item.forceActiveFocus()
             }
-        }
-        function onEditingFinished(){
-            mode = false
-            if (root.callback != "undefined")
-                root.callback(loader.item.text)
         }
         MouseArea{
             anchors.fill: parent
