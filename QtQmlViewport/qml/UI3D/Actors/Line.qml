@@ -13,7 +13,7 @@ Actor
 {
 	id: component
 	property real lineWidth : 1
-	property color color : "black"
+	property var color : "black"
 	property var from : [0,0,0]
 	property var to : [1,0,0]
 

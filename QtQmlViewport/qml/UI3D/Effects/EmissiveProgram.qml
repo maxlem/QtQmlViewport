@@ -5,21 +5,22 @@
 * \file : EmissiveProgram.qml
 */
 
-import QtQuick 2.5
+import QtQuick 2.15
 import Viewport 1.0
 
 GLSLProgram
 {
     id: component
-    property color color : "black"
-    property color backColor : "red"
+    property var color : "black"
+    property var backColor : "red"
     uniforms: ({color: color, backColor: backColor})
     vertexShader: "
-                        #version 410
-                        in highp vec4 vertices;
-                        in highp vec3 normals;
-                        uniform highp mat4 matrix;
-                        uniform highp float point_size;
+                        #version 310 es
+                        precision mediump float;
+                        in vec4 vertices;
+                        in vec3 normals;
+                        uniform  mat4 matrix;
+                        uniform  float point_size;
                         void main()
                         {
                             gl_Position = matrix*vertices;
@@ -27,9 +28,10 @@ GLSLProgram
                         }
                    "
     fragmentShader: "
-                        #version 410
-                        uniform highp vec4 color;
-                        uniform highp vec4 backColor;
+                        #version 310 es
+                        precision mediump float;
+                        uniform vec4 color;
+                        uniform vec4 backColor;
                         layout(location = 0) out vec4 frag_color;
                         layout(location = 1) out vec4 frag_color_copy;
                         void main()

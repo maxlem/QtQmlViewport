@@ -36,7 +36,7 @@ class InFboRenderer( QQuickFramebufferObject.Renderer ):
         self.render_to_texture_array = None
         self.locked_render_to_texture_array = Array.ArrayBase(ndarray = np.empty((0,0,4), np.uint8))
 
-        self.draw_buffers = [GL.GL_COLOR_ATTACHMENT0, GL.GL_COLOR_ATTACHMENT1, GL.GL_COLOR_ATTACHMENT2, GL.GL_COLOR_ATTACHMENT3, GL.GL_COLOR_ATTACHMENT4]
+        self.draw_buffers = [GL.GL_COLOR_ATTACHMENT0, GL.GL_COLOR_ATTACHMENT1]
         
 
     def to_texture_target(self, array):
@@ -317,10 +317,10 @@ class InFboRenderer( QQuickFramebufferObject.Renderer ):
         GL.glEnable( GL.GL_BLEND )
         GL.glBlendFunc( GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA )
         GL.glBlendEquation( GL.GL_FUNC_ADD)
-        GL.glEnable(GL.GL_PRIMITIVE_RESTART)
+        GL.glEnable(GL.GL_PRIMITIVE_RESTART_FIXED_INDEX)
         
         
-        GL.glPrimitiveRestartIndex(0xFFFFFFFF)
+        # GL.glPrimitiveRestartIndex(0xFFFF)
         GL.glDrawBuffers(len(self.draw_buffers), self.draw_buffers)
 
         #opengl_error_check(currentframe())
@@ -398,7 +398,12 @@ class InFboRenderer( QQuickFramebufferObject.Renderer ):
                 #opengl_error_check(currentframe())
 
                 if program.uniformLocation("point_size") != -1:
-                    GL.glDisable(GL.GL_PROGRAM_POINT_SIZE)
+                    
+                    try:
+                        GL.glDisable(GL.GL_PROGRAM_POINT_SIZE)
+                    except Exception as e:
+                        LoggingManager.instance().warning(f"GL.glDisable(GL.GL_PROGRAM_POINT_SIZE) failed with: exception {e}")
+                        
                     program.setUniformValue("point_size", float(point_size))
                 elif point_size != 1:
                     try:
@@ -412,7 +417,7 @@ class InFboRenderer( QQuickFramebufferObject.Renderer ):
 
                 for name, value in viewitems(uniforms):
                     program.setUniformValue(name, value)
-                    #opengl_error_check(currentframe(), f"error with uniform {name}, {value}")
+                    opengl_error_check(currentframe(), f"error with uniform {name}, {value}")
 
                 texture_unit = 0
                 for name, tex in viewitems(textures):
@@ -454,7 +459,10 @@ class InFboRenderer( QQuickFramebufferObject.Renderer ):
                         GL.glGetFloatv(GL.GL_LINE_WIDTH_RANGE, line_r)
                         LoggingManager.instance().warning(f"{e}: yout asked for line_width = {line_width}, line range is {list(line_r)}, aliased range is {list(aliased_r)}, smooth range is {list(smooth_r)}")
                 else:
-                    GL.glDisable(GL.GL_LINE_SMOOTH)
+                    try:
+                        GL.glDisable(GL.GL_LINE_SMOOTH)
+                    except Exception as e:
+                        LoggingManager.instance().warning(f"GL.glDisable(GL.GL_LINE_SMOOTH) failed with exception {e}")
 
                 #opengl_error_check(currentframe())
 

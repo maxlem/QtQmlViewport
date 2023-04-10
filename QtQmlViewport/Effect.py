@@ -1,7 +1,15 @@
 from QtQmlViewport import Product
 
-from PyQt5.QtGui import QOpenGLShaderProgram, QOpenGLShader
-
+from PyQt5.QtGui import QOpenGLShaderProgram, QOpenGLShader, QColor
+def _beforeSetUniforms(uniforms):
+    out = {}
+    for name, value in uniforms.items():
+        if isinstance(value, str):
+            out[name] = QColor(value)     
+            print(f"replacing {name} {value} with {QColor(value)}")
+        else:
+            out[name] = value
+    return out
 class GLSLProgram( Product.Product ):
     def __init__(self, parent = None, vertex_shader = None, geometry_shader = None, fragment_shader = None, uniforms = {}, textures = {}, outputTextures = {}):
         super(GLSLProgram, self).__init__(parent)
@@ -28,7 +36,9 @@ class GLSLProgram( Product.Product ):
             self._program.link()
             self._linkDirty = False
 
-    Product.InputProperty(vars(), 'QVariant', 'uniforms', {})
+
+               
+    Product.InputProperty(vars(), 'QVariant', 'uniforms', {}, before_write_callback = _beforeSetUniforms)
 
     ''' supports dict of Array, subject to the constraints associated with Image.to_QImage() '''
     Product.InputProperty(vars(), 'QVariant', 'textures', {})

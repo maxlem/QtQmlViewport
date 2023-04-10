@@ -1,0 +1,38 @@
+
+import os
+os.environ['QSG_RENDER_LOOP'] = "basic"
+os.environ['MESA_GLES_VERSION_OVERRIDE'] = "3.2" 
+from QtQmlViewport import interactive, Actors, Geometry, Array, CustomEffects, CustomActors, utils
+from PyQt5.QtGui import QColor
+from PyQt5.QtWidgets import QApplication
+import trimesh
+import time
+
+trimesh_ = trimesh.creation.box([2,4,2])
+
+utils.LoggingManager.instance().verbose = True
+
+scene_actor = Actors.Actor(
+    geometry = Geometry.Geometry(
+        indices = Array.ArrayBase(ndarray = trimesh_.faces.flatten().astype('u4'))
+        , attribs = Geometry.Attribs(
+            vertices = Array.ArrayBase(ndarray = trimesh_.vertices)
+            , normals = Array.ArrayBase(ndarray = trimesh_.vertex_normals))
+        , primitive_type = Geometry.PrimitiveType.TRIANGLES
+    ), effect = CustomEffects.material(color = QColor("blue"), back_color = QColor("blue"), light_power = 5e1, light_follows_camera = True, shininess = 100.0, reverse_backfaces = False, flat_shading = True)
+    , transform = CustomActors.ensure_Transform(None)
+    , name = "actor"
+)
+
+
+vp = interactive.viewport(os.path.join(os.path.dirname(__file__),"main.qml"))
+root = vp.root_wrapper()
+root.actors.addActor(scene_actor)
+if True:
+    vp.wait_key(' ')
+else:
+    vp.show()
+    QApplication.processEvents()
+    time.sleep(0.01)
+    QApplication.processEvents()
+    time.sleep(0.01)

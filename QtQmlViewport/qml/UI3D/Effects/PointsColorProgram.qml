@@ -11,10 +11,11 @@ import UI3D 1.0
 EmissiveProgram
 {
     vertexShader: "
-                #version 410
-                uniform highp mat4 matrix;
-                in highp vec4 vertices;
-                in highp vec4 colors;
+                #version 310 es
+                precision mediump float;
+                uniform  mat4 matrix;
+                in  vec4 vertices;
+                in  vec4 colors;
 
                 out vec4 color;
                 void main()
@@ -24,7 +25,8 @@ EmissiveProgram
                 }
             "
     fragmentShader: "
-                #version 410
+                #version 310 es
+                precision mediump float;
                 in vec4 color;
                 layout(location = 0) out vec4 frag_color;
                 layout(location = 1) out vec4 frag_color_copy;

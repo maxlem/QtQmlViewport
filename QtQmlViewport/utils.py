@@ -150,7 +150,8 @@ def add_image_providers(engine, img_providers):
 def create_format():
     fmt = QSurfaceFormat()
     fmt.setProfile(QSurfaceFormat.CoreProfile)
-    fmt.setVersion(3, 3) #vmware max opengl version is 3.3
+    fmt.setRenderableType(QSurfaceFormat.OpenGLES)
+    fmt.setVersion(3, 2) #vmware max opengl version is 3.3
     fmt.setAlphaBufferSize(8)
     fmt.setStencilBufferSize(8)
     fmt.setDepthBufferSize(24)

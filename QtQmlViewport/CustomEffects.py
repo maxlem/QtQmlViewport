@@ -11,11 +11,12 @@ def point_colors(line_width = 1, point_size = 1):
 , shader0 = Effect.GLSLProgram( 
             vertex_shader = 
             """
-                #version 410
-                uniform highp mat4 matrix;
-                uniform highp float point_size;
-                in highp vec4 vertices;
-                in highp vec4 colors;
+                #version 310 es
+                precision mediump float;
+                uniform  mat4 matrix;
+                uniform  float point_size;
+                in  vec4 vertices;
+                in  vec4 colors;
 
                 out vec4 color;
                 void main()
@@ -27,7 +28,8 @@ def point_colors(line_width = 1, point_size = 1):
             """
             , fragment_shader = 
             """
-                #version 410
+                #version 310 es
+                precision mediump float;
                 in vec4 color;
                 layout(location = 0) out vec4 frag_color;
                 layout(location = 1) out vec4 frag_color_copy;
@@ -42,12 +44,13 @@ def color_map(color_map, min_amplitude, max_amplitude, back_color = QColor("red"
     return Effect.Effect(name = "color_map"
     , shader0 = Effect.GLSLProgram( 
     vertex_shader = """
-                        #version 410
-                        uniform highp mat4 matrix;
-                        uniform highp float point_size;
-                        in highp vec4 vertices;
-                        in highp vec3 normals;
-                        in highp float amplitude;
+                        #version 310 es
+                        precision mediump float;
+                        uniform  mat4 matrix;
+                        uniform  float point_size;
+                        in  vec4 vertices;
+                        in  vec3 normals;
+                        in  float amplitude;
 
                         out float a;
                         void main()
@@ -58,11 +61,12 @@ def color_map(color_map, min_amplitude, max_amplitude, back_color = QColor("red"
                         }
                    """
     , fragment_shader = """
-                        #version 410
+                        #version 310 es
+                        precision mediump float;
                         uniform sampler1D color_map;
-                        uniform highp vec4 back_color;
-                        uniform highp float min_amplitude;
-                        uniform highp float max_amplitude;
+                        uniform  vec4 back_color;
+                        uniform  float min_amplitude;
+                        uniform  float max_amplitude;
                         in float a;
                         layout(location = 0) out vec4 frag_color;
                         layout(location = 1) out vec4 frag_color_copy;
@@ -90,9 +94,10 @@ def emissive(color, back_color = QColor("red"), line_width = 1, point_size = 1, 
     , point_size = point_size
     , shader0 = Effect.GLSLProgram(
         vertex_shader = """ 
-                            #version 410
-                            in highp vec4 vertices;
-                            in highp vec3 normals;
+                            #version 310 es
+                            precision mediump float;
+                            in  vec4 vertices;
+                            in  vec3 normals;
                             uniform bool is_billboard;
 
                             uniform float aspect_ratio;
@@ -117,9 +122,10 @@ def emissive(color, back_color = QColor("red"), line_width = 1, point_size = 1, 
                             }
                     """
         , fragment_shader = """
-                            #version 410
-                            uniform highp vec4 color;
-                            uniform highp vec4 back_color;
+                            #version 310 es
+                            precision mediump float;
+                            uniform  vec4 color;
+                            uniform  vec4 back_color;
                             layout(location = 0) out vec4 frag_color;
                             layout(location = 1) out vec4 frag_color_copy;
                             void main()
@@ -147,9 +153,10 @@ def depth(scale = 0.01):
         uniforms = {'scale' : scale}
         # , outputTextures = {'float_depth': Array.Array(ndarray = np.empty((0,0,4), np.uint8))}
         , vertex_shader = """ 
-                            #version 410
-                            in highp vec4 vertices;
-                            in highp vec3 normals;
+                            #version 310 es
+                            precision mediump float;
+                            in  vec4 vertices;
+                            in  vec3 normals;
                             uniform mat4 model_matrix, view_matrix, projection_matrix;
                             out float dist_to_camera;
                             out vec4 cam_coord;
@@ -163,7 +170,8 @@ def depth(scale = 0.01):
                             }
                     """
         , fragment_shader = """
-                            #version 410
+                            #version 310 es
+                            precision mediump float;
                             uniform float scale;
                             uniform mat4 projection_matrix;
                             uniform mat4 ortho_matrix;
@@ -294,7 +302,8 @@ class MaterialGLSL(QObject):
         return MaterialGLSL.VERTEX_SHADER    
     VERTEX_SHADER = \
         '''
-        #version 410
+        #version 320 es
+        precision mediump float;
         //inspired from https://github.com/pycollada/pycollada/blob/master/examples/daeview/renderer/shaders.py
         in vec4 vertices;
         in vec3 normals;
@@ -343,18 +352,20 @@ class MaterialGLSL(QObject):
         return MaterialGLSL.GEOMETRY_SHADER
     GEOMETRY_SHADER = \
         '''
-        #version 410
-
+        #version 320 es
+        precision mediump float;
         layout( triangles ) in;
         layout(triangle_strip, max_vertices=3) out;
 
-        uniform bool flat_shading = false;
+        uniform bool flat_shading;
 
         in vec3 vertex_position[3], normal_direction[3], light_direction[3], view_direction[3];
         in float distance[3];
         in vec2 diffuse_tc[3];
 
-        out vec3 g_normal_direction, g_light_direction, g_view_direction;
+        out vec3 g_normal_direction;
+        out vec3 g_light_direction;
+        out vec3 g_view_direction;
         out float g_distance;
         out vec2 g_diffuse_tc;
 
@@ -386,8 +397,12 @@ class MaterialGLSL(QObject):
         return MaterialGLSL.FRAGMENT_SHADER.format("color")
     FRAGMENT_SHADER = \
             '''
-            #version 410
-            in vec3 g_normal_direction, g_light_direction, g_view_direction;
+            #version 320 es
+            precision mediump float;
+            
+            in vec3 g_normal_direction;
+            in vec3 g_light_direction;
+            in vec3 g_view_direction;
             in float g_distance;
             in vec2 g_diffuse_tc;
             uniform sampler2D diffuse;

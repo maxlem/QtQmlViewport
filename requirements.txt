@@ -2,12 +2,9 @@ future
 transforms3d
 matplotlib 
 numpy
-opencv-python
 PyOpenGL
 PyQt5
-PyQtChart
 pycollada
 trimesh
 utm
-Shapely
 tqdm

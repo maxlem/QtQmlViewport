@@ -14,12 +14,13 @@ GLSLProgram
     property color color : "black"
     uniforms: ({color: color})
     vertexShader: "
-                        #version 410
-                        uniform highp mat4 matrix;
-                        uniform highp float point_size;
-                        in highp vec4 vertices;
-                        in highp vec3 normals;
-                        in highp float amplitude;
+                        #version 310 es
+                        precision mediump float;
+                        uniform  mat4 matrix;
+                        uniform  float point_size;
+                        in  vec4 vertices;
+                        in  vec3 normals;
+                        in  float amplitude;
 
                         out float a;
                         void main()
@@ -30,8 +31,9 @@ GLSLProgram
                         }
                    "
     fragmentShader: "
-                        #version 410
-                        uniform highp vec4 color;
+                        #version 310 es
+                        precision mediump float;
+                        uniform  vec4 color;
                         in float a;
                         layout(location = 0) out vec4 frag_color;
                         layout(location = 1) out vec4 frag_color_copy;

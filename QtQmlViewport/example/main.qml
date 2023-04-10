@@ -1,4 +1,6 @@
 import Viewport 1.0
+import UI3D 1.0
+import QtQuick 2.9
 Item
 {
     id: component
@@ -19,7 +21,7 @@ Item
         actors: Actors
         {
             id: actors_
-            XYZ{scale:5}
+            XYZ{scale: 10}
         }
     }
 

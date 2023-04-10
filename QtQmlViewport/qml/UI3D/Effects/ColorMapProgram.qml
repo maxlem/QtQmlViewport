@@ -15,11 +15,12 @@ GLSLProgram
     property ColorMapArray colorMap : ColorMapArray{id: defaultColorMap_}
     textures: ({colorMap: component.colorMap})
     vertexShader: "
-                        #version 410
-                        uniform highp mat4 matrix;
-                        in highp vec4 vertices;
-                        in highp vec3 normals;
-                        in highp float amplitude;
+                        #version 310 es
+                        precision mediump float;
+                        uniform  mat4 matrix;
+                        in  vec4 vertices;
+                        in  vec3 normals;
+                        in  float amplitude;
 
                         out float a;
                         void main()
@@ -29,7 +30,8 @@ GLSLProgram
                         }
                    "
     fragmentShader: "
-                        #version 410
+                        #version 310 es
+                        precision mediump float;
                         uniform sampler1D colorMap;
                         in float a;
                         layout(location = 0) out vec4 frag_color;
